@@ -8,6 +8,8 @@
 # by design: no prompt text and no booking/policy field name appears in this file.
 from __future__ import annotations
 
+import hashlib
+import json
 import sys
 from typing import Any, Optional, TypedDict
 
@@ -233,6 +235,23 @@ def _metered_wrapper() -> Any:
     return _METERED
 
 
+def _normalize_cache_key(cache_key: str) -> str:
+    """Map a human-readable cache key to the 64-char hex the golden cache needs.
+
+    The pre-existing GoldenCache only accepts 64-char lowercase hex keys
+    (anything else is a miss on read and refused on write). A key that is
+    already valid hex passes through; any other string is hashed with sha256 —
+    exactly what the cache's own explicit-key derivation does — so callers keep
+    using readable keys. Never raises; falls back to hashing the repr.
+    """
+    try:
+        if len(cache_key) == 64 and all(c in "0123456789abcdef" for c in cache_key):
+            return cache_key
+        return hashlib.sha256(cache_key.encode("utf-8")).hexdigest()
+    except Exception:
+        return hashlib.sha256(repr(cache_key).encode("utf-8")).hexdigest()
+
+
 _CACHE: Any = None
 
 
@@ -270,7 +289,7 @@ def run_agent(step_id: str, agent: Any, prompt: str, *, cache_key: str) -> LlmRe
                                "cache": {"enabled": True}, "none": {"enabled": True}},
             "forced_degraded": bool(cfg["demo_mode"]),
         }
-        deps = {"cache_key": cache_key, "cache": _cache()}
+        deps = {"cache_key": _normalize_cache_key(cache_key), "cache": _cache()}
         guarded = with_resilience(_metered_wrapper(), config, deps)
         raw = guarded(agent, prompt)
         if is_degraded_result(raw):
@@ -362,11 +381,16 @@ def record_golden(cache_key: str, text: str) -> None:
     the exact shape run_agent()'s cache path expects. Used by the recording script
     so the offline demo path has real content. Never raises."""
     try:
+        normalized = _normalize_cache_key(cache_key)
+        meta: dict[str, Any] = {"provider": PROVIDER_TAG,
+                                "model": load_app_config()["model_id"],
+                                "source": "recorded"}
+        if normalized != cache_key:
+            meta["explicit_key"] = cache_key
         _cache().put(
-            cache_key,
+            normalized,
             {"text": text, "input_tokens": None, "output_tokens": None, "source": "cache"},
-            {"provider": PROVIDER_TAG, "model": load_app_config()["model_id"],
-             "source": "recorded"},
+            meta,
         )
     except Exception as err:  # noqa: BLE001 — recording must never crash the app
         try:
@@ -377,8 +401,36 @@ def record_golden(cache_key: str, text: str) -> None:
 
 def golden_keys() -> list[str]:
     """Sorted list of the cache keys currently present in the golden cache. Used by
-    the recording script to report coverage. Never raises."""
+    the recording script to report coverage. Never raises.
+
+    Keys are reported under the human-readable name passed to `record_golden`
+    (stored in the manifest's `explicit_key` field) when one exists, otherwise
+    under the hex key the cache files use.
+    """
     try:
-        return sorted(_cache().list().keys())
+        names: set[str] = set()
+        known_hex: set[str] = set()
+        try:
+            cfg = load_app_config()
+            manifest = repo_root() / cfg["golden_cache_dir"] / "golden-index.json"
+            entries = json.loads(manifest.read_text(encoding="utf-8")).get("entries", {})
+            if isinstance(entries, dict):
+                for hex_key, entry in entries.items():
+                    known_hex.add(hex_key)
+                    if isinstance(entry, dict) and isinstance(entry.get("explicit_key"), str):
+                        names.add(entry["explicit_key"])
+                    else:
+                        names.add(hex_key)
+        except Exception:
+            pass
+        try:
+            for hex_key in _cache().list().keys():
+                # list() only knows hex; keep it unless the manifest already
+                # reported this entry under a human-readable name.
+                if hex_key not in known_hex:
+                    names.add(hex_key)
+        except Exception:
+            pass
+        return sorted(names)
     except Exception:
         return []
