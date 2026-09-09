@@ -1,0 +1,29 @@
+{
+  "$id": "https://stayquiet/contracts/tokenizer-profiles.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0.0",
+  "description": "model_profile → tokenizer mapping, read by the token counter and the cost meter. Adding a profile is a minor change; renaming or removing one is breaking.",
+  "profiles": {
+    "generic-heuristic": {
+      "tokenizer": "heuristic",
+      "context_window": 8192,
+      "notes": "Chars/4 approximation. Dependency-free default."
+    },
+    "bedrock": {
+      "tokenizer": "anthropic-heuristic",
+      "context_window": 200000,
+      "notes": "Amazon Bedrock Anthropic Claude family as reached through the Strands BedrockModel provider. Heuristic offline count; real token counts come from the provider usage block when available."
+    },
+    "gpt-4o-mini": {
+      "tokenizer": "cl100k-heuristic",
+      "context_window": 128000,
+      "notes": "Used only by the build-time synthetic-data generator."
+    },
+    "gpt-4o": {
+      "tokenizer": "cl100k-heuristic",
+      "context_window": 128000,
+      "notes": "Used only by the build-time document/pitch tooling."
+    }
+  },
+  "default_profile": "generic-heuristic"
+}

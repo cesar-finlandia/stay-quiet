@@ -1,0 +1,37 @@
+{
+  "synthetic": true,
+  "captured_at": "2026-08-01",
+  "source": "synthetic stand-in for a public short-stay platform help-centre capture",
+  "clauses": [
+    {
+      "clause_id": "cancellation.moderate",
+      "title": "Moderate cancellation policy",
+      "text": "A guest who cancels at least 5 days before check-in receives a refund of every night except the first. Inside 5 days, the first night and 50 percent of the remaining nights are non-refundable. The cleaning fee is always refunded when the stay does not happen."
+    },
+    {
+      "clause_id": "cancellation.strict",
+      "title": "Strict cancellation policy",
+      "text": "A guest who cancels after booking receives a refund of 50 percent of the nightly rate only if the cancellation is made within 48 hours of booking and at least 14 days before check-in. No refund is issued after that window."
+    },
+    {
+      "clause_id": "payments.installments",
+      "title": "Paying in instalments",
+      "text": "A guest may ask the host to split the payout across two instalments. The host may agree in writing and collect the second instalment directly, provided the total charged matches the booking total."
+    },
+    {
+      "clause_id": "cleaning.checkout_tasks",
+      "title": "Checkout tasks a host may require",
+      "text": "A host may list checkout tasks in the house rules, including stripping the bed linen, running the dishwasher, taking out refuse and returning furniture to its original position. A guest who skips a listed task may be charged the documented cost of completing it."
+    },
+    {
+      "clause_id": "cleaning.fee_disputes",
+      "title": "Disputed cleaning charges",
+      "text": "A host who charges a guest for extra cleaning must provide dated photographs and a written description within 14 days of checkout. Charges without evidence are reversed."
+    },
+    {
+      "clause_id": "reviews.retaliation",
+      "title": "Reviews after a dispute",
+      "text": "Neither party may condition a review on the outcome of a payment dispute. A review that references a refund negotiation may be removed on request."
+    }
+  ]
+}

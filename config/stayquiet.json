@@ -1,0 +1,15 @@
+{
+  "$comment": "StayQuiet application configuration — the single knob surface (blueprint §2.5). Env overrides: STAYQUIET_MODEL_ID, AWS_REGION, STAYQUIET_DEMO_MODE, STAYQUIET_CYCLE_INTERVAL_S, GOLDEN_CACHE_DIR.",
+  "model_id": "global.anthropic.claude-sonnet-4-6",
+  "region": "us-west-2",
+  "demo_mode": false,
+  "cycle_interval_s": 900,
+  "fixtures_dir": "fixtures/synthetic",
+  "golden_cache_dir": "fixtures/golden",
+  "max_bookings": 6,
+  "thread_token_budget": 900,
+  "budget_tokens": 400000,
+  "budget_warn_at": 0.8,
+  "estimate_usd_per_1k": 0.006,
+  "escalate_refund_over_eur": 0.0
+}

@@ -1,0 +1,134 @@
+[
+  {
+    "synthetic": true,
+    "booking_id": "BK-1042",
+    "listing_id": "L-2",
+    "listing_name": "Harbour Studio",
+    "guest_name": "Maya Okafor",
+    "check_in": "2026-09-18",
+    "check_out": "2026-09-21",
+    "nights": 3,
+    "payout_eur": 612.0,
+    "status": "confirmed",
+    "policy_refs": ["cancellation.moderate", "payments.installments"],
+    "prior_disputes": 0,
+    "open_issue": "guest_question",
+    "cleaner_notes": null,
+    "guest_messages": [
+      { "at": "2026-09-07T18:22:00Z", "sender": "guest", "text": "Hi! We are really looking forward to the studio. Would it be possible to pay in two parts, half now and half a week before we arrive? Money is a bit tight until payday." },
+      { "at": "2026-09-07T20:05:00Z", "sender": "host", "text": "Hello Maya, thanks for asking. Let me check what is allowed and come back to you tomorrow." },
+      { "at": "2026-09-09T08:14:00Z", "sender": "guest", "text": "No rush. If it helps I can send the second half by bank transfer directly to you." }
+    ]
+  },
+  {
+    "synthetic": true,
+    "booking_id": "BK-1043",
+    "listing_id": "L-1",
+    "listing_name": "Old Town Loft",
+    "guest_name": "Tomas Rivera",
+    "check_in": "2026-09-15",
+    "check_out": "2026-09-17",
+    "nights": 2,
+    "payout_eur": 418.0,
+    "status": "confirmed",
+    "policy_refs": ["cleaning.checkout_tasks"],
+    "prior_disputes": 1,
+    "open_issue": "cleaner_dispute",
+    "cleaner_notes": "Guest left the bed made up. I stripped and bagged the linen myself, that is 20 minutes I am not paid for. Last month you told me to charge the guest for this.",
+    "guest_messages": [
+      { "at": "2026-09-08T11:40:00Z", "sender": "guest", "text": "Checking in on Tuesday around six, is that still fine?" },
+      { "at": "2026-09-08T12:02:00Z", "sender": "host", "text": "Six works. The lockbox code is in the arrival note." },
+      { "at": "2026-09-09T09:30:00Z", "sender": "cleaner", "text": "Reminder that the house rules still say strip the linen. Do I keep charging for it or not?" }
+    ]
+  },
+  {
+    "synthetic": true,
+    "booking_id": "BK-1044",
+    "listing_id": "L-2",
+    "listing_name": "Harbour Studio",
+    "guest_name": "Anneli Virtanen",
+    "check_in": "2026-09-12",
+    "check_out": "2026-09-14",
+    "nights": 2,
+    "payout_eur": 395.0,
+    "status": "cancellation_requested",
+    "policy_refs": ["cancellation.moderate"],
+    "prior_disputes": 0,
+    "open_issue": "guest_question",
+    "cleaner_notes": null,
+    "guest_messages": [
+      { "at": "2026-09-09T07:11:00Z", "sender": "guest", "text": "I am so sorry, my father is in hospital and I have to cancel. I read that cancelling five days ahead gets everything back except the first night. Is that right?" },
+      { "at": "2026-09-09T07:19:00Z", "sender": "guest", "text": "I would rather not lose the whole amount, it was a lot for us." }
+    ]
+  },
+  {
+    "synthetic": true,
+    "booking_id": "BK-1045",
+    "listing_id": "L-3",
+    "listing_name": "Lakeside Cabin",
+    "guest_name": "Jonas Weber",
+    "check_in": "2026-09-22",
+    "check_out": "2026-09-26",
+    "nights": 4,
+    "payout_eur": 964.0,
+    "status": "confirmed",
+    "policy_refs": ["cancellation.strict", "cleaning.fee_disputes"],
+    "prior_disputes": 0,
+    "open_issue": null,
+    "cleaner_notes": null,
+    "guest_messages": [
+      { "at": "2026-09-05T15:00:00Z", "sender": "guest", "text": "Booked, thanks. See you in a couple of weeks." }
+    ]
+  },
+  {
+    "synthetic": true,
+    "booking_id": "BK-1046",
+    "listing_id": "L-1",
+    "listing_name": "Old Town Loft",
+    "guest_name": "Priya Nair",
+    "check_in": "2026-09-19",
+    "check_out": "2026-09-20",
+    "nights": 1,
+    "payout_eur": 187.0,
+    "status": "confirmed",
+    "policy_refs": ["cancellation.strict"],
+    "prior_disputes": 0,
+    "open_issue": null,
+    "cleaner_notes": null,
+    "guest_messages": [
+      { "at": "2026-09-06T10:12:00Z", "sender": "guest", "text": "One night only, arriving late. No questions from me." }
+    ]
+  },
+  {
+    "synthetic": true,
+    "booking_id": "BK-1047",
+    "listing_id": "L-3",
+    "listing_name": "Lakeside Cabin",
+    "guest_name": "Sofia Marino",
+    "check_in": "2026-09-28",
+    "check_out": "2026-10-02",
+    "nights": 4,
+    "payout_eur": 1052.0,
+    "status": "confirmed",
+    "policy_refs": ["cleaning.checkout_tasks", "reviews.retaliation"],
+    "prior_disputes": 2,
+    "open_issue": "guest_question",
+    "cleaner_notes": "This is the guest who argued about the linen charge in July and then again in August. Please tell me in advance what I am allowed to charge for so I am not the one arguing at the door.",
+    "guest_messages": [
+      { "at": "2026-08-02T09:04:00Z", "sender": "guest", "text": "We stayed at the cabin in July and were charged forty euro for cleaning we had already done ourselves. I would like that looked at again, because we followed every instruction in the arrival note and took photographs before we left." },
+      { "at": "2026-08-02T17:40:00Z", "sender": "host", "text": "I am sorry that was frustrating. The charge came from the linen task in the house rules. Let me review the photographs you sent and come back to you." },
+      { "at": "2026-08-04T08:15:00Z", "sender": "guest", "text": "Thank you. To be clear I am not disputing the stay, only the extra charge. We enjoyed the cabin and would like to come back, but I do not want a surprise charge a second time." },
+      { "at": "2026-08-04T19:22:00Z", "sender": "host", "text": "Understood. I refunded twenty euro as a goodwill gesture and made a note on your booking so the same charge is not applied again." },
+      { "at": "2026-08-19T12:30:00Z", "sender": "guest", "text": "We are back for four nights at the end of September, arriving on the twenty-eighth. Could you confirm what we are expected to do at checkout this time, in writing, so there is no confusion for either of us?" },
+      { "at": "2026-08-19T13:02:00Z", "sender": "host", "text": "Of course. I will send the checkout list once I have confirmed which tasks I am still allowed to require." },
+      { "at": "2026-08-27T10:47:00Z", "sender": "guest", "text": "Another question while I remember. The cabin listing mentions a wood stove. Is there a carbon monoxide alarm in the room with the stove? We are bringing our two year old and I would like to know before we arrive." },
+      { "at": "2026-08-27T11:15:00Z", "sender": "host", "text": "There is an alarm in the hallway. I will check the date on it and confirm." },
+      { "at": "2026-09-01T16:20:00Z", "sender": "guest", "text": "Following up on the checkout list and the alarm. Sorry to keep asking, it is only because of the charge last time and because of the little one." },
+      { "at": "2026-09-03T07:55:00Z", "sender": "cleaner", "text": "For this booking please tell me the exact tasks before the turnover. I do not want another conversation about linen with this guest." },
+      { "at": "2026-09-05T09:31:00Z", "sender": "guest", "text": "One more thing. We may need to shift our arrival by one day depending on a train strike. If we do, does that change anything about the booking or the amount?" },
+      { "at": "2026-09-06T18:44:00Z", "sender": "guest", "text": "Also, my partner asked whether we can leave two bicycles somewhere covered overnight. Happy to be told no, just want to plan." },
+      { "at": "2026-09-08T08:09:00Z", "sender": "guest", "text": "I saw a notice that the cleaning rules changed. Does that affect what we have to do at checkout, and does it affect the charge from July at all?" },
+      { "at": "2026-09-09T06:50:00Z", "sender": "guest", "text": "No pressure on any of this. A single message covering the checkout tasks, the alarm and the possible date change would be perfect, then I will stop filling your inbox." }
+    ]
+  }
+]

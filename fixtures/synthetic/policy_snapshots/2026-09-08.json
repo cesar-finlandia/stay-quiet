@@ -1,0 +1,42 @@
+{
+  "synthetic": true,
+  "captured_at": "2026-09-08",
+  "source": "synthetic stand-in for a public short-stay platform help-centre capture",
+  "clauses": [
+    {
+      "clause_id": "cancellation.moderate",
+      "title": "Moderate cancellation policy",
+      "text": "A guest who cancels at least 7 days before check-in receives a full refund of every night including the first. Inside 7 days, the first night is non-refundable and the remaining nights are refunded in full. The cleaning fee is always refunded when the stay does not happen."
+    },
+    {
+      "clause_id": "cancellation.strict",
+      "title": "Strict cancellation policy",
+      "text": "A guest who cancels after booking receives a refund of 50 percent of the nightly rate only if the cancellation is made within 48 hours of booking and at least 14 days before check-in. No refund is issued after that window."
+    },
+    {
+      "clause_id": "payments.installments",
+      "title": "Paying in instalments",
+      "text": "Instalment plans are arranged by the platform only. A host must not agree to collect any part of a booking total directly, and must not accept a bank transfer, a payment link or cash for a stay booked on the platform. A host who does so forfeits payout protection for that stay."
+    },
+    {
+      "clause_id": "cleaning.checkout_tasks",
+      "title": "Checkout tasks a host may require",
+      "text": "A host may require a guest to take out refuse, return furniture to its original position and run the dishwasher. A host may no longer require a guest to strip bed linen or launder textiles, and may not charge a guest for skipping either. Charges for the permitted tasks still require documented cost."
+    },
+    {
+      "clause_id": "cleaning.fee_disputes",
+      "title": "Disputed cleaning charges",
+      "text": "A host who charges a guest for extra cleaning must provide dated photographs and a written description within 14 days of checkout. Charges without evidence are reversed."
+    },
+    {
+      "clause_id": "reviews.retaliation",
+      "title": "Reviews after a dispute",
+      "text": "Neither party may condition a review on the outcome of a payment dispute. A review that references a refund negotiation may be removed on request."
+    },
+    {
+      "clause_id": "safety.co_alarm",
+      "title": "Carbon monoxide alarm confirmation",
+      "text": "A host with a fuel-burning appliance must confirm in the listing that a working carbon monoxide alarm is installed, and must re-confirm it every 12 months."
+    }
+  ]
+}
