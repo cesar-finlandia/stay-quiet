@@ -1,0 +1,14 @@
+{
+  "$comment": "Requirement IDs: SUBMIT-03, SUBMIT-REU-01, GOV-RES-02, XCUT-08 | Owned by M11 (DP-J §5.3, §7) | Checked-in generic defaults for `submit format`. Labels are structural, never platform copy (SUBMIT-REU-01); per-event overrides edit this file only. Validated via contracts/submit-config.schema.json (RES-04); malformed → safe defaults + warn.",
+  "version": "1.0.0",
+  "output": { "path": "submission.md", "format": "markdown" },
+  "fieldLabels": {
+    "tagline": "Tagline",
+    "target_user": "Target User",
+    "why_ai": "Why AI",
+    "tech_stack": "Tech Stack",
+    "disclosure": "Disclosure / Provenance"
+  },
+  "hygiene": { "enabled": true, "reportPath": "hygiene-report.md" },
+  "disclosure": { "include_excluded_footnote": false }
+}

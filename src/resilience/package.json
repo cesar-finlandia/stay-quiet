@@ -1,0 +1,19 @@
+{
+  "$comment": "Requirement IDs: RES-01, RES-REU-01, GOV-MIN-04, XCUT-08 | Placeholder workspace package so `pnpm -F resilience` resolves (M01 step 1). Runtime code (withResilience, withValidation, DegradedResult, GoldenCache) lands in later steps per DP-A §9.2. Zero required runtime deps (GOV-MIN-04).",
+  "name": "resilience",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node scripts/run-tests.mjs",
+    "test:offline": "node scripts/run-tests.mjs --offline",
+    "test:contracts": "node scripts/check-contracts.mjs"
+  },
+  "dependencies": {
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1"
+  }
+}

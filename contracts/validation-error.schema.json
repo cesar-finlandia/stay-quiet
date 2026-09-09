@@ -1,0 +1,14 @@
+{
+  "$comment": "Requirement IDs: RES-04, XCUT-08 | Single source: master_blueprint.md §4 #4 | Frozen shape defined in design_documents/design_plans/DP-A-resilience-layer.md §4.4 ('Validation errors shape is frozen at contracts/validation-error.schema.json'). Consumed by EVAL-02, DATA-04, PGM-02/PGM-09, PROFILE-01, BENCH-02 via src/resilience validate()/repair().",
+  "$id": "https://chassis/contracts/validation-error.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ValidationError",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["path", "message", "code"],
+  "properties": {
+    "path":    { "type": "string", "minLength": 1, "description": "JSON Pointer-style location of the failing field within the validated document" },
+    "message": { "type": "string", "minLength": 1, "description": "human-readable validation failure description; rendered verbatim into the generic self-repair re-prompt template" },
+    "code":    { "type": "string", "minLength": 1, "description": "stable machine-readable error code (e.g. type, required, format, enum)" }
+  }
+}

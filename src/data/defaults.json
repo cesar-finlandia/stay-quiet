@@ -1,0 +1,32 @@
+{
+  "$comment": "Requirement IDs: DATA-01, DATA-03, GOV-RES-02, RES-REU-02 | DP-H §6.3 — checked-in safe defaults for DataGeneratorConfig. Missing/malformed user config → warn + these values, never crash. Validated via RES-04 (src/resilience validate) against contracts/data-generator-config.schema.json. Provider is NEVER set here — it always comes from the shared config/model-profiles.json profile's provider field.",
+  "role": "data-generator",
+  "model_profile": "balanced",
+  "resilience": {
+    "timeout_ms": 30000,
+    "retries": 2,
+    "backoff": {
+      "policy": "exponential",
+      "base_ms": 500,
+      "factor": 2.0,
+      "max_ms": 5000,
+      "jitter": true
+    },
+    "fallback_chain": {
+      "order": ["replay", "cache", "none"]
+    },
+    "cache_key_strategy": "auto"
+  },
+  "batch": {
+    "maxCount": 200,
+    "truncateFieldChars": 4000
+  },
+  "watermark": {
+    "enabled": true,
+    "allowDisableWatermark": false,
+    "headerText": "SYNTHETIC DEMO DATA — NOT REAL"
+  },
+  "cache": {
+    "enabled": false
+  }
+}

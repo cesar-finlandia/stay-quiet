@@ -1,0 +1,5 @@
+{
+  "$comment": "TODO(ENGINE): define Engine output shape (validated via RES-04 once defined) \u2014 see docs/engine-guide.md",
+  "type": "object",
+  "properties": {}
+}

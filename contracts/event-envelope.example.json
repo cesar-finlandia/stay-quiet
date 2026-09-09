@@ -1,0 +1,105 @@
+[
+  {
+    "step_id": "widget-intake",
+    "status": "started",
+    "payload": { "message": "Intake received for Acme Corp widget query" },
+    "timestamp": "2026-03-11T14:00:00.000Z",
+    "sequence": 0,
+    "trace_id": "7a9e2c18-4f6b-4a2b-8f1d-2e3a4b5c6d7e",
+    "degraded": false
+  },
+  {
+    "step_id": "widget-intake",
+    "status": "done",
+    "payload": { "fields": { "query": "lorem ipsum widget overview", "count": 3 } },
+    "timestamp": "2026-03-11T14:00:01.100Z",
+    "sequence": 1,
+    "trace_id": "7a9e2c18-4f6b-4a2b-8f1d-2e3a4b5c6d7e",
+    "degraded": false
+  },
+  {
+    "step_id": "widget-synthesis",
+    "status": "started",
+    "payload": {},
+    "timestamp": "2026-03-11T14:00:01.200Z",
+    "sequence": 2,
+    "trace_id": "7a9e2c18-4f6b-4a2b-8f1d-2e3a4b5c6d7e"
+  },
+  {
+    "step_id": "widget-synthesis",
+    "status": "streaming",
+    "payload": { "delta": "Acme ", "index": 0 },
+    "timestamp": "2026-03-11T14:00:01.400Z",
+    "sequence": 3,
+    "trace_id": "7a9e2c18-4f6b-4a2b-8f1d-2e3a4b5c6d7e"
+  },
+  {
+    "step_id": "widget-synthesis",
+    "status": "streaming",
+    "payload": { "delta": "widget ", "index": 1 },
+    "timestamp": "2026-03-11T14:00:01.520Z",
+    "sequence": 4,
+    "trace_id": "7a9e2c18-4f6b-4a2b-8f1d-2e3a4b5c6d7e"
+  },
+  {
+    "step_id": "widget-synthesis",
+    "status": "streaming",
+    "payload": { "delta": "overview: ", "index": 2 },
+    "timestamp": "2026-03-11T14:00:01.640Z",
+    "sequence": 5,
+    "trace_id": "7a9e2c18-4f6b-4a2b-8f1d-2e3a4b5c6d7e"
+  },
+  {
+    "step_id": "widget-synthesis",
+    "status": "streaming",
+    "payload": { "delta": "lorem ipsum.", "index": 3, "done": false },
+    "timestamp": "2026-03-11T14:00:01.760Z",
+    "sequence": 6,
+    "trace_id": "7a9e2c18-4f6b-4a2b-8f1d-2e3a4b5c6d7e"
+  },
+  {
+    "step_id": "widget-synthesis",
+    "status": "done",
+    "payload": { "text": "Acme widget overview: lorem ipsum.", "tokens": 7 },
+    "timestamp": "2026-03-11T14:00:01.900Z",
+    "sequence": 7,
+    "trace_id": "7a9e2c18-4f6b-4a2b-8f1d-2e3a4b5c6d7e"
+  },
+  {
+    "step_id": "widget-citation",
+    "status": "started",
+    "payload": {},
+    "timestamp": "2026-03-11T14:00:02.000Z",
+    "sequence": 8,
+    "trace_id": "7a9e2c18-4f6b-4a2b-8f1d-2e3a4b5c6d7e"
+  },
+  {
+    "step_id": "widget-citation",
+    "status": "done",
+    "payload": {
+      "citations": [
+        { "title": "Acme widget spec — lorem ipsum", "url": "https://example.com/spec", "snippet": "lorem ..." }
+      ]
+    },
+    "timestamp": "2026-03-11T14:00:02.300Z",
+    "sequence": 9,
+    "trace_id": "7a9e2c18-4f6b-4a2b-8f1d-2e3a4b5c6d7e"
+  },
+  {
+    "step_id": "widget-synthesis",
+    "status": "error",
+    "payload": {
+      "degraded": true,
+      "reason": "validation_repair_failed",
+      "fallback_source": "cache",
+      "original_error": "step validation failed at synthesis stage",
+      "data": { "text": "Acme widget overview: lorem ipsum (cached preview)." },
+      "timestamp": "2026-03-11T14:00:03.000Z",
+      "version": "1.0.0"
+    },
+    "timestamp": "2026-03-11T14:00:03.000Z",
+    "sequence": 10,
+    "trace_id": "7a9e2c18-4f6b-4a2b-8f1d-2e3a4b5c6d7e",
+    "degraded": true
+  }
+]

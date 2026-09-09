@@ -1,0 +1,36 @@
+/*
+  Requirement IDs: UI-03, UI-04 | DP-B §6.4 (minimal row)
+  "minimal" theme — inherits :root defaults from ../tokens.css. Feels like a
+  doc: 720px centered single column, Inter 16px, generous whitespace, soft
+  rounded cards. Explicitly restated here so the theme is self-contained.
+*/
+:root[data-theme="minimal"] {
+  --ui-font-family: "Inter", system-ui, sans-serif;
+  --ui-font-size-base: 16px;
+  --ui-line-height: 1.5;
+  --ui-spacing-unit: 8px;
+  --ui-radius: 6px;
+  --ui-color-bg: #ffffff;
+  --ui-color-fg: #0a0a0a;
+  --ui-color-accent: #111111;
+  --ui-color-accent-soft: #f2f2f2;
+  --ui-layout-max: 720px;
+  --ui-layout-gap: calc(var(--ui-spacing-unit) * 3);
+  --ui-color-degraded-bg: #fffbeb; /* amber-50 */
+}
+
+/* Minimal layout rhythm: calm centered stack (UI-06 default). */
+[data-theme="minimal"] body,
+[data-theme="minimal"] .ui-layout-root {
+  font-family: var(--ui-font-family);
+  background: var(--ui-color-bg);
+  color: var(--ui-color-fg);
+}
+
+[data-theme="minimal"] .ui-layout-main {
+  max-width: var(--ui-layout-max);
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-layout-gap);
+}

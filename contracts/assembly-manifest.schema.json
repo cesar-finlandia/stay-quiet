@@ -1,0 +1,100 @@
+{
+  "$comment": "Requirement IDs: ASM-01, ASM-04, ASM-RES-01, ADV-02, GOV-MIN-02, GOV-MIN-03, XCUT-08 | Single source: master_blueprint.md §4 #6 | Frozen verbatim from design_documents/design_plans/DP-G-assembly-advisory-tooling.md §3.3 | Contract #6 — single source for PROV-01, DOCTOR-REU-01, DECKGEN-03, SCRIPT-02, FAQDEF-02, TRACK-01, SUBMIT, BENCH.",
+  "$id": "https://chassis/contracts/assembly-manifest.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AssemblyManifest",
+  "description": "Contract #6 ASM-01/ASM-04 — single source for PROV, DOCTOR, DECKGEN, TRACK, BENCH. Sub-component granularity via id like media/stt (6.17) with top-level default grouping.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["manifest_version", "created_at", "chassis_version", "components", "selection_rationale", "git"],
+  "properties": {
+    "manifest_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "SemVer of this manifest schema itself (e.g. 1.0.0). Consumers pin MAJOR. Adding optional field = MINOR, removing/renaming required = MAJOR + MIGRATION.md.",
+      "examples": ["1.0.0"]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Generation timestamp ISO-8601 UTC."
+    },
+    "chassis_version": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Chassis version — git sha (40 hex) or SemVer tag (e.g. v1.2.0 or abc1234). Resolved from git rev-parse HEAD at assembly time."
+    },
+    "components": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 30,
+      "description": "One entry per component/sub-component. Supports 6.17 granularity: id may be top-level (12) or slash sub-component. Each entry declares inclusion + requirements.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "included", "version", "requires_env", "requires_providers"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "resilience", "platform", "media", "ideation", "context", "dev-tooling", "assembly-advisory", "data", "cost", "provenance", "pgm", "profile",
+              "platform/deploy", "platform/transport", "platform/ui",
+              "media/stt", "media/vision", "media/pdf", "media/tts",
+              "ideation/pit", "ideation/idea", "ideation/retro", "ideation/deckgen", "ideation/script", "ideation/demodrive", "ideation/faqdef",
+              "dev-tooling/mock", "dev-tooling/eval", "dev-tooling/doctor", "dev-tooling/track", "dev-tooling/bench",
+              "provenance/prov", "provenance/submit"
+            ],
+            "description": "Closed enum — top-level or sub-component. Slash form selects finer granularity; parent group is default grouping."
+          },
+          "included": { "type": "boolean", "description": "True = include in working copy; false = excluded (still documented via selection_rationale)." },
+          "version": {
+            "type": "string",
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+            "description": "Component version at assembly time (SemVer). Mirrors chassis tag for now; per-component pinning future via MINOR."
+          },
+          "requires_env": {
+            "type": "array",
+            "items": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+            "description": "Env var names this component requires when included (e.g. OPENAI_API_KEY). Empty when none. Source of truth for DOCTOR-REU-01.",
+            "examples": [["OPENAI_API_KEY"], []]
+          },
+          "requires_providers": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Provider/service names (e.g. openai, anthropic, vercel, replicate). Empty when none. Used by PROV-01 disclosure and COST/TRACK.",
+            "examples": [["openai"], []]
+          }
+        }
+      }
+    },
+    "selection_rationale": {
+      "type": "array",
+      "minItems": 12,
+      "description": "One entry per top-level component (12) — ADV-02 requires rationale for every include AND every exclude, including PGM/PROFILE rationale-skipped.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "decision", "reason"],
+        "properties": {
+          "id": { "type": "string", "description": "Top-level component id (12 ids only, not slash sub-components). Mirrors components[] parent when sub-components exist." },
+          "decision": { "type": "string", "enum": ["include", "exclude"] },
+          "reason": {
+            "type": "string",
+            "minLength": 20,
+            "maxLength": 300,
+            "description": "One-line rationale citing specific brief text for include (GOV-MIN-03), or clear skip reason. Must reference brief excerpt for ADV-AC-03."
+          }
+        }
+      }
+    },
+    "git": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["initialized", "baseline_commit"],
+      "properties": {
+        "initialized": { "type": "boolean", "description": "True after ASM-06 git init." },
+        "baseline_commit": { "type": ["string", "null"], "description": "SHA of baseline commit after ASM-06 (null before init)." }
+      }
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "$comment": "Requirement IDs: RES-06, XCUT-08 | Single source: master_blueprint.md §4 #3 | Frozen verbatim from design_documents/design_plans/DP-A-resilience-layer.md §4.3 | The only degraded signal; UI detects degraded===true (UI-RES-02). Never rename the degraded const; version additive-only.",
+  "$id": "https://chassis/contracts/degraded-result.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DegradedResult",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["degraded", "reason", "fallback_source", "timestamp", "version"],
+  "properties": {
+    "degraded":        { "const": true, "description": "discriminator — UI-RES-02 checks this field" },
+    "reason":          { "type": "string", "minLength": 1, "examples": ["primary_timeout","secondary_failed","cache_miss","validation_repair_failed","forced_degraded"] },
+    "fallback_source": { "enum": ["secondary_provider","cache","replay","none"], "description": "which step ultimately produced data, or none" },
+    "original_error":  { "type": ["string","null"], "default": null },
+    "data":            { "type": ["object","array","string","number","boolean","null"], "default": null, "description": "last successful fallback payload if any; null if none" },
+    "timestamp":       { "type": "string", "format": "date-time" },
+    "version":         { "const": "1.0.0" }
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "$comment": "Requirement IDs: RES-02, RES-03, RES-07, XCUT-08 | New contract owned by M01 | Shape frozen in design_documents/design_plans/DP-A-resilience-layer.md §4.2 | Validated via RES-04; malformed config falls back to checked-in defaults (RES-AC-04, GOV-RES-02). Secondary-provider callable is supplied out-of-band to the wrapper, never serialized.",
+  "$id": "https://chassis/contracts/resilience-config.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ResilienceConfig",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "timeout_ms": {
+      "type": "integer",
+      "default": 15000,
+      "minimum": 100,
+      "maximum": 1800000,
+      "description": "per-call timeout applied to primary, secondary, and repair calls; timed-out attempt triggers retry if retries remain. Upper bound raised from the DP-A-era 120000 so agentic transports (PGM sweep chat turns) fit their minute-scale budgets."
+    },
+    "retries": {
+      "type": "integer",
+      "default": 2,
+      "minimum": 0,
+      "maximum": 5,
+      "description": "additional attempts beyond the initial call; 0 disables retry"
+    },
+    "backoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "policy": { "enum": ["exponential", "linear", "fixed", "none"], "default": "exponential" },
+        "base_ms": { "type": "integer", "default": 250, "minimum": 10 },
+        "factor": { "type": "number", "default": 2.0, "minimum": 1.0, "description": "multiplier applied per retry; used by exponential policy" },
+        "max_ms": { "type": "integer", "default": 5000, "description": "upper cap on any single computed backoff delay" },
+        "jitter": { "type": "boolean", "default": true, "description": "±25% uniform jitter added to computed delays" }
+      }
+    },
+    "fallback_chain": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "order": {
+          "type": "array",
+          "items": { "enum": ["secondary_provider", "cache", "replay", "none"] },
+          "default": ["cache", "replay", "none"],
+          "description": "single source of ordering — array position is the only priority; disabled steps are skipped silently"
+        },
+        "secondary_provider": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean", "default": false, "description": "disabled by default to avoid surprise provider billing; callable itself passed out-of-band" }
+          }
+        },
+        "cache": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean", "default": true, "description": "golden-path cache lookup step (RES-05)" }
+          }
+        },
+        "replay": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean", "default": true, "description": "pre-recorded replay step; replay subspace replay::<key> of the same RES-05 store" }
+          }
+        },
+        "none": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "const": true, "default": true, "description": "terminal step emitting DegradedResult — always enabled, chain never ends without a typed degraded signal" }
+          }
+        }
+      }
+    },
+    "cache_key_strategy": {
+      "enum": ["auto", "explicit"],
+      "default": "auto",
+      "description": "auto = sha256(provider|model|input_hash); explicit = caller-supplied cache_key_explicit, hashed once for filename uniformity"
+    },
+    "cache_key_explicit": {
+      "type": "string",
+      "description": "caller-supplied deterministic key (kebab-case, e.g. demo-step-acme-widget-overview); required iff cache_key_strategy == explicit"
+    },
+    "forced_degraded": {
+      "type": "boolean",
+      "default": false,
+      "description": "kill switch (RES-07): when true, primary + secondary are skipped and the wrapper enters fallback directly for rehearsal / live-demo degradation"
+    }
+  },
+  "allOf": [
+    {
+      "if": { "required": ["cache_key_strategy"], "properties": { "cache_key_strategy": { "const": "explicit" } } },
+      "then": { "required": ["cache_key_explicit"] }
+    }
+  ]
+}

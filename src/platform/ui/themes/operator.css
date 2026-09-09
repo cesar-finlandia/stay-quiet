@@ -1,0 +1,55 @@
+/*
+  Requirement IDs: UI-03, UI-04 | DP-B §6.4 (operator row)
+  "operator" theme — feels like an operator console, maximally distinct:
+  full 1280px dense three-zone layout (status timeline → stream main →
+  citations drawer); monospace with tabular numerals + small caps labels;
+  4px base unit, rectangular cards (radius 1), grid borders; dark palette
+  with electric lime accent.
+*/
+:root[data-theme="operator"] {
+  --ui-font-family: "JetBrains Mono", ui-monospace, monospace;
+  --ui-font-size-base: 14px;
+  --ui-line-height: 1.45;
+  --ui-spacing-unit: 4px; /* dense */
+  --ui-radius: 1px;
+  --ui-color-bg: #09090b;     /* near-black */
+  --ui-color-fg: #e4e4e7;     /* zinc fg */
+  --ui-color-accent: #a3e635; /* electric lime */
+  --ui-color-accent-soft: #14532d33;
+  --ui-layout-max: 1280px;
+  --ui-layout-gap: var(--ui-spacing-unit);
+  --ui-color-degraded-bg: #422006; /* amber-900 on dark */
+}
+
+[data-theme="operator"] body,
+[data-theme="operator"] .ui-layout-root {
+  font-family: var(--ui-font-family);
+  background: var(--ui-color-bg);
+  color: var(--ui-color-fg);
+}
+
+/* Dense three-zone console grid (still focused — dashboard is opt-in UI-06). */
+[data-theme="operator"] .ui-layout-main {
+  max-width: var(--ui-layout-max);
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: minmax(180px, 220px) 1fr minmax(200px, 260px);
+  gap: 1px;
+  border: 1px solid color-mix(in srgb, var(--ui-color-fg) 25%, transparent);
+}
+
+[data-theme="operator"] .ui-layout-main > .zone-status,
+[data-theme="operator"] .ui-layout-main > .zone-content,
+[data-theme="operator"] .ui-layout-main > .zone-citations {
+  padding: calc(var(--ui-spacing-unit) * 2);
+  border-right: 1px solid color-mix(in srgb, var(--ui-color-fg) 25%, transparent);
+}
+
+/* Small caps labels; tabular numerals for sequences/statuses. */
+[data-theme="operator"] .ui-step__label,
+[data-theme="operator"] .ui-citations__title,
+[data-theme="operator"] .ui-badge {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+}

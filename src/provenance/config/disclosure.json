@@ -1,0 +1,5 @@
+{
+  "$comment": "Requirement IDs: PROV-04, GOV-MIN-01, XCUT-08 | Owned by M11 (DP-J §7) | Checked-in defaults for `provo generate`. Footnote off by default to keep disclosure minimal (GOV-MIN-01) — omitted ≠ claimed either way (PROV-04). Validated via contracts/disclosure-config.schema.json.",
+  "include_excluded_footnote": false,
+  "short_sha_length": 7
+}

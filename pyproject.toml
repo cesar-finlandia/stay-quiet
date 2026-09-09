@@ -1,0 +1,57 @@
+# Requirement IDs: ASM-01, ASM-RES-01, GOV-MIN-04, XCUT-08
+# Python packaging for the chassis repo (DP-G §4.1): exposes the Selective
+# Assembly CLI console script `assembly` -> assembly.cli:main (src-layout).
+# The only runtime deps beyond the stdlib are jsonschema, already required by
+# the M01 resilience layer (RES-04), and pypdf, the single justified runtime
+# dep for born-digital PDF text extraction (DP-C §10.1 — MED-03/MED-AC-01;
+# lazy-imported so absence surfaces as a typed MediaError, never a crash).
+# Zero new services/databases (GOV-MIN-04).
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hackathon-chassis"
+version = "1.0.0"
+description = "Reusable hackathon chassis - selective assembly CLI (ASM-01..06, DP-G)"
+requires-python = ">=3.11"
+dependencies = ["jsonschema>=4.21", "pypdf>=4.0"]
+
+[project.scripts]
+assembly = "assembly.cli:main"
+cost-summary = "src.cost.cli:main"
+# M08 dev-tooling single-check CLIs (DP-F1 §4.1/§5.1): mock / eval / doctor.
+# The unified `chassis <sub>` dispatcher lives on the TS side (scripts/chassis.ts,
+# `npm run chassis -- <sub>`) matching the repo's vite-node script convention;
+# these per-tool entries give Python users direct commands with identical flags.
+mock = "src.dev.mock.cli:main"
+eval = "src.dev.eval.cli:main"
+doctor = "src.dev.doctor.cli:main"
+# M09 PGM CLI (DP-K §9.2): Python wrapper delegating to the TS engine
+# (src/pgm/pipeline.ts) so flags/exit codes stay byte-compatible with `pgm`
+# from package.json bin.
+pgm = "src.pgm.cli:main"
+# M10 Event Profile Extractor CLI (DP-L §9.3): `profile extract --brief --out`
+# plus --validate / --show-flag dry-runs; blank-template fallback, never throws.
+profile = "src.profile.cli:main"
+# M11 Provenance & Disclosure CLI (DP-J §9.1): `provo generate` / `provo summary`;
+# Python twin of the TS bin `provo` — identical flags, output bytes, exit codes.
+provo = "src.provenance.provo.cli:main"
+# M15 TRACK CLI (DP-F2 §8.1): `track status [--config --json --verbose --strict]`
+# + bare `track --config <file>` alias; read-only reporter, exit 0 unless
+# --strict with degraded rows -> 1 (TRACK-RES-01 non-blocking outer guard).
+track = "src.dev.track.cli:main"
+# M15 BENCH CLI (DP-F2 §8.1): `bench run --dummy <path> --manifest <path>
+# --report <dir> [--config <path>] [--verbose]`; exit 0 on overall pass|partial,
+# 1 when any boundary failed and was not skipped.
+bench = "src.dev.bench.cli:main"
+
+# Full-suite collection (DP-F2 §9): tests/dev/track/test_guards.py and
+# tests/resilience/test_guards.py share a basename across __init__.py-less
+# dirs; importlib mode lets pytest collect both without renaming owned tests.
+[tool.pytest.ini_options]
+addopts = "--import-mode=importlib"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["assembly*", "dev*", "pgm*", "profile*", "provenance*"]

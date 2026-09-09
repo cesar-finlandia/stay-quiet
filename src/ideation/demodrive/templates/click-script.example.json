@@ -1,0 +1,46 @@
+{
+  "version": "1.0.0",
+  "base_url": "http://localhost:5173",
+  "viewport": { "width": 1280, "height": 720, "device_scale_factor": 2 },
+  "video": { "enabled": true, "codec": "vp9", "size": { "width": 1280, "height": 720 } },
+  "layout": "single-focus",
+  "theme": null,
+  "data_source": {
+    "kind": "mock",
+    "mock_script": "examples/dummy-fixtures/mock/acme-widget-flow.json",
+    "cache_key": null
+  },
+  "steps": [
+    {
+      "id": "widget-intake",
+      "description": "Landing — intake query lorem ipsum, streaming text renderer idle",
+      "actions": [
+        { "action": "navigate", "value": "/", "timeout_ms": 5000 },
+        { "action": "wait_for", "selector": "getByRole('heading', {name: 'Acme widget intake'})", "timeout_ms": 3000 },
+        { "action": "wait_for", "selector": "[data-testid='step-status-indicator']", "timeout_ms": 3000 },
+        { "action": "screenshot", "selector": null }
+      ],
+      "wait_after_ms": 400
+    },
+    {
+      "id": "widget-synthesis",
+      "description": "Synthesis — streaming deltas Acme/widget/overview coalesced",
+      "actions": [
+        { "action": "wait_for", "selector": "[data-testid='streaming-text-renderer']", "timeout_ms": 4000 },
+        { "action": "wait_ms", "value": "1200" },
+        { "action": "wait_for", "selector": "text=Acme widget overview: lorem ipsum.", "timeout_ms": 5000 }
+      ],
+      "wait_after_ms": 300
+    },
+    {
+      "id": "widget-citation",
+      "description": "Citation — source display with Acme spec link",
+      "actions": [
+        { "action": "wait_for", "selector": "[data-testid='citation-display']", "timeout_ms": 3000 },
+        { "action": "click", "selector": "getByRole('link', {name: 'Acme widget spec'})", "timeout_ms": 3000 },
+        { "action": "wait_for", "selector": "text=lorem ...", "timeout_ms": 3000 }
+      ],
+      "wait_after_ms": 200
+    }
+  ]
+}

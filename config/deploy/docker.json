@@ -1,0 +1,7 @@
+{
+  "$comment": "Requirement IDs: DEP-REU-01 | DP-B §5.1 — Docker-anywhere descriptor; swap via DEPLOY_PROVIDER=docker npm run deploy. Registry/namespace come from DOCKER_REGISTRY env, never hardcoded here.",
+  "provider": "docker",
+  "dockerfile": "Dockerfile",
+  "registryEnv": "DOCKER_REGISTRY",
+  "pushCommand": "docker push"
+}

@@ -1,0 +1,14 @@
+# Requirement IDs: DEP-REU-01 | DP-B §5.1 — Streamlit provider descriptor;
+# swap via DEPLOY_PROVIDER=streamlit npm run deploy. Streamlit is Python-only
+# and has no native SSE (TRN-03 note): transport must be 'none' or polling on
+# this provider. No secrets; STREAMLIT_* values come from .env.
+
+[provider]
+name = "streamlit"
+
+[deploy]
+main_module = "src/app/streamlit_app.py"
+python_version = "3.11"
+
+[env]
+TRANSPORT = "none"

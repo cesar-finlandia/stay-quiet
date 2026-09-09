@@ -1,0 +1,37 @@
+{
+  "$id": "https://chassis/contracts/message.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ContextMessage",
+  "description": "Provider-agnostic buffer entry — CTX-01. No domain noun is a first-class field.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["role", "content"],
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": ["system", "user", "assistant", "tool"],
+      "description": "Message role. Frozen enum; adding a role is a MINOR (optional handling), renaming is MAJOR."
+    },
+    "content": {
+      "type": "string",
+      "minLength": 0,
+      "description": "Message text. Empty string is valid (CTX-RES-01 empty handling). Large content allowed — CTX-AC-03 handles oversize."
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "CTX-04 operates ONLY on metadata + counts, never on content semantics.",
+      "properties": {
+        "timestamp": { "type": "string", "format": "date-time", "description": "Creation time ISO-8601. Optional; used for ordering diagnostics, not truncation priority." },
+        "pinned": { "type": "boolean", "default": false, "description": "If true, truncation strategies must never evict this entry (CTX-04 pinned handling). Typically system prompt is pinned." },
+        "priority": { "type": "integer", "minimum": 0, "maximum": 100, "default": 0, "description": "Higher priority retained preferentially when strategy supports priority (future strategies). Default 0. Strategies that ignore priority document so." },
+        "id": { "type": "string", "description": "Optional stable id (kebab-case). Not used by truncation; for caller correlation." }
+      }
+    },
+    "token_count": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Cached token count for this entry under the active model_profile. Optional; if absent, counter computes it. Cache is invalidated when model_profile changes."
+    }
+  }
+}

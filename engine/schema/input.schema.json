@@ -1,0 +1,5 @@
+{
+  "$comment": "TODO(ENGINE): define Engine input shape per hackathon domain \u2014 see docs/engine-guide.md",
+  "type": "object",
+  "properties": {}
+}

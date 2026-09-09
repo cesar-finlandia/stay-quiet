@@ -1,0 +1,53 @@
+/*
+  Requirement IDs: UI-03, UI-04 | DP-B §6.4 (editorial row)
+  "editorial" theme — feels like long-form journalism, opposite of minimal:
+  wide 960px 12-col grid with asymmetric offsets; serif display typography
+  ~18px with generous leading 1.7; hairline rules between sections; warm paper
+  palette with editorial-red accent.
+*/
+:root[data-theme="editorial"] {
+  --ui-font-family: "Newsreader", Georgia, serif;
+  --ui-font-size-base: 18px;
+  --ui-line-height: 1.7;
+  --ui-spacing-unit: 12px;
+  --ui-radius: 2px;
+  --ui-color-bg: #faf6ef;      /* warm paper */
+  --ui-color-fg: #1c1917;      /* deep ink */
+  --ui-color-accent: #b91c1c;  /* editorial red */
+  --ui-color-accent-soft: #f3e8e4;
+  --ui-layout-max: 960px;
+  --ui-layout-gap: calc(var(--ui-spacing-unit) * 2);
+  --ui-color-degraded-bg: #fef3c7; /* amber-100 on paper */
+}
+
+[data-theme="editorial"] body,
+[data-theme="editorial"] .ui-layout-root {
+  font-family: var(--ui-font-family);
+  font-size: var(--ui-font-size-base);
+  line-height: var(--ui-line-height);
+  background: var(--ui-color-bg);
+  color: var(--ui-color-fg);
+}
+
+/* 12-col grid with asymmetric offset: rail (status timeline) + article column. */
+[data-theme="editorial"] .ui-layout-main {
+  max-width: var(--ui-layout-max);
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  column-gap: var(--ui-spacing-unit);
+}
+
+[data-theme="editorial"] .ui-layout-main > .zone-status {
+  grid-column: 1 / span 3; /* left rail */
+}
+
+[data-theme="editorial"] .ui-layout-main > .zone-content {
+  grid-column: 5 / span 8; /* asymmetric offset skips col 4 */
+}
+
+/* Hairline rules between sections. */
+[data-theme="editorial"] .ui-step,
+[data-theme="editorial"] .ui-citation {
+  border-bottom: 1px solid color-mix(in srgb, var(--ui-color-fg) 14%, transparent);
+}

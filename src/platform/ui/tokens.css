@@ -1,0 +1,25 @@
+/*
+  Requirement IDs: UI-03, UI-04 | DP-B §6.3
+  Token contract — defaults for the "minimal" theme; every value overridable
+  per theme via :root[data-theme="..."] selectors under src/platform/ui/themes/.
+  Components reference ONLY var(--ui-*) tokens and className hooks — swapping
+  tokens changes visual identity without touching component logic or JSX.
+  --ui-color-degraded-bg is consumed by the built-in degraded banner (UI-RES-02,
+  step 5) via var() fallback so themes can restyle degradation safely.
+*/
+:root,
+:root[data-theme="minimal"] {
+  --ui-font-family: "Inter", system-ui, sans-serif;
+  --ui-font-size-base: 16px;
+  --ui-line-height: 1.5;
+  --ui-spacing-unit: 8px;
+  --ui-radius: 6px;
+  --ui-color-bg: #ffffff;
+  --ui-color-fg: #0a0a0a;
+  --ui-color-accent: #111111;
+  --ui-color-accent-soft: #f2f2f2;
+  --ui-layout-max: 720px;
+  --ui-layout-gap: calc(var(--ui-spacing-unit) * 3);
+  /* Degraded banner background (UI-RES-02) — amber-50 default. */
+  --ui-color-degraded-bg: #fffbeb;
+}

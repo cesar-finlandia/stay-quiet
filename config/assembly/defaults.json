@@ -1,0 +1,4 @@
+{
+  "$comment": "Requirement IDs: ASM-04, GOV-RES-02, XCUT-08 | DP-G §7 — global ASM defaults. chassis_version is the fallback stamped into manifests when `git rev-parse HEAD` cannot be resolved at assembly time. Loaded defensively: malformed file -> warn + hardcoded in-memory fallback (GOV-RES-02), never crash.",
+  "chassis_version": "v0.0.0-unresolved"
+}

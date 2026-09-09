@@ -1,0 +1,26 @@
+// Requirement IDs: GOV-MIN-04, RES-REU-01, XCUT-08, UI-05 | DP-B §6.1
+// Minimal Node 20+ ESM TypeScript config covering src/ (master_blueprint.md §6.1; DP-A §9).
+// JSX support added for the platform UI library (UI-01): react-jsx transform,
+// DOM lib for React types, and "src/*" alias so components import the envelope
+// only via the transport barrel (TRN-06).
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "paths": {
+      "src/*": ["./src/*", "./src/*/index.ts"],
+      "examples/*": ["./examples/*"]
+    },
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noUncheckedIndexedAccess": true,
+    "types": ["node"],
+    "noEmit": true
+  },
+  "include": ["src"]
+}

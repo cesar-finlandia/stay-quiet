@@ -1,0 +1,15 @@
+{
+  "$comment": "Requirement IDs: DECKGEN-01, GOV-RES-02, XCUT-08 | Owned by M13 (DP-D2a §7/§8.2) | Checked-in fallback used verbatim when config/deckgen.json is absent or malformed — must stay byte-identical in meaning to config/deckgen.json. Loaders warn and use these defaults; never crash (GOV-RES-02).",
+  "version": "1.0.0",
+  "output": {
+    "dir": "deck/"
+  },
+  "inputs": {
+    "plan": "winning_project_plan.md",
+    "manifest": "assembly.manifest.json",
+    "disclosure": "disclosure.md"
+  },
+  "visual": {
+    "live_label": "▶ LIVE DEMO"
+  }
+}

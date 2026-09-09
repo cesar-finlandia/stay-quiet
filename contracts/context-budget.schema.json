@@ -1,0 +1,19 @@
+{
+  "$id": "https://chassis/contracts/context-budget.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ContextBudgetConfig",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["model_profile"],
+  "properties": {
+    "model_profile": { "type": "string", "minLength": 1, "examples": ["gpt-4o", "claude-3-5-sonnet", "generic-heuristic"], "description": "Key into contracts/tokenizer-profiles.json — selects tokenizer + context_window (GOV-REU-02 never hardcoded)." },
+    "context_window": { "type": ["integer", "null"], "minimum": 1, "description": "Override for model context size. If null/absent, resolved from tokenizer-profiles.json via model_profile." },
+    "reserved_output": { "type": "integer", "minimum": 0, "default": 1024, "description": "Tokens reserved for generation; input_budget = context_window - reserved_output (CTX-03)." },
+    "strategy": { "type": "string", "default": "sliding-window-pinned", "enum": ["sliding-window-pinned", "keep-last-n", "extension-only"], "description": "CTX-04 strategy name. extension-only delegates to CTX-05 and skips mechanical truncation if compaction succeeds." },
+    "strategy_options": { "type": "object", "additionalProperties": true, "description": "Per-strategy knobs. E.g. keep-last-n { n: number }." },
+    "warning_threshold": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.8, "description": "CTX-06: utilization >= threshold emits warning==='approaching'. 0.8 is default per COST-03 convention." },
+    "critical_threshold": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.95, "description": "CTX-06: utilization >= critical emits warning==='exceeded' even when still under budget — early trigger for RES-03." },
+    "mutate": { "type": "boolean", "default": false, "description": "CTX-RES-02: if true, truncate in place; default false (side-effect-free, new array)." },
+    "compaction": { "type": ["object", "null"], "description": "CTX-05 extension slot — optional CompactionFn config; null means disabled." }
+  }
+}

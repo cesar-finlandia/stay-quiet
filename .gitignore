@@ -1,0 +1,43 @@
+# ASM-06 generic credential patterns only (ASM-REU-02) — never project/domain-specific
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+credentials*.json
+*credentials.json
+secrets*.json
+.aws/
+.gcp/
+.azure/
+*service-account*.json
+.cache/
+# chassis artifacts not in submission
+/examples/
+# IDE
+.DS_Store
+# --- run_sweep.sh engine-building harness (added 2026-08-25, DP-G amendment):
+# everything the sweep driver creates while implementing the engine ---
+.chat/
+.run_sweep/
+.run_sweep.lock
+.control/
+.intramessages/
+.pi_sessions/
+.supervisor/
+.run_summaries/
+.step_sids.tmp
+.sequential_run.log
+.sequential_results.txt
+.planner_results.txt
+.planner_run.log
+.prompt_flight.md
+.debug_run.log
+status_report.md
+_driver.log
+_run.log
+run_state.json
+handout.md
+handout_active.md

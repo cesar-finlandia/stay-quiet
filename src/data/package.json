@@ -1,0 +1,10 @@
+{
+  "$comment": "Requirement IDs: DATA-01, DATA-02, GOV-MIN-04, XCUT-08 | Workspace package for the M06/DATA module (DP-H §8). Skeleton step: contracts + types + stable export surface; generation/watermark/writer implementations land in later steps per DP-H §8.2. Zero required runtime deps beyond src/resilience and Node stdlib (GOV-MIN-04, DATA-REU-01).",
+  "name": "data",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  }
+}

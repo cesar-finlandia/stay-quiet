@@ -1,0 +1,235 @@
+{
+  "$id": "https://chassis/contracts/component-catalog.json",
+  "version": "1.0.0",
+  "components": [
+    {
+      "id": "resilience",
+      "display_name": "Resilience & Demo-Proofing Layer",
+      "description": "Generic `withResilience` wrapper + `DegradedResult` + golden cache (`RES-*`).",
+      "requires_env": [],
+      "requires_providers": [],
+      "depends_on": [],
+      "gov_min_hint": "GOV-MIN-01: prevents single biggest event-day failure (live API crash \u2192 blank screen); zero new runtime dep (file-based JSON cache).",
+      "sub_components": [],
+      "ships_in_app": true,
+      "disclosure_capability": "a wrapper that retries a slow or failed provider call and falls back to a cached response, so a live demo never dead-ends on a blank screen"
+    },
+    {
+      "id": "platform",
+      "display_name": "Platform Layer",
+      "description": "One-command deploy (`DEP`), typed streaming bus (`TRN`), 3 distinct UI themes (`UI`). requires_env applies when platform/deploy included; provider swappable via DEPLOY_PROVIDER config.",
+      "requires_env": [
+        "VERCEL_TOKEN",
+        "VERCEL_PROJECT_ID"
+      ],
+      "requires_providers": [
+        "vercel"
+      ],
+      "depends_on": [
+        "resilience",
+        "context"
+      ],
+      "gov_min_hint": "GOV-MIN-01: needed if brief requires public URL or live-state stream; else skippable per GOV-MIN-02.",
+      "sub_components": [
+        "platform/deploy",
+        "platform/transport",
+        "platform/ui"
+      ],
+      "ships_in_app": true,
+      "disclosure_capability": "a typed event-streaming bus for pushing step-by-step progress to the browser, plus a one-command deploy helper and a small themed UI shell"
+    },
+    {
+      "id": "media",
+      "display_name": "Media I/O Wrappers",
+      "description": "Thin drivers `media/stt`, `media/vision`, `media/pdf`, `media/tts` with unified `MediaMessage` (`MED-*`). Env varies per sub-wrapper: REPLICATE_API_KEY for vision/pdf drivers; ELEVENLABS_API_KEY may be required by media/tts.",
+      "requires_env": [
+        "OPENAI_API_KEY"
+      ],
+      "requires_providers": [
+        "openai",
+        "replicate",
+        "elevenlabs"
+      ],
+      "depends_on": [
+        "resilience",
+        "context"
+      ],
+      "gov_min_hint": "GOV-MIN-03: include only if brief explicitly mentions audio/image/PDF/voice; each sub-wrapper is sub-component granular.",
+      "sub_components": [
+        "media/stt",
+        "media/vision",
+        "media/pdf",
+        "media/tts"
+      ],
+      "ships_in_app": true,
+      "disclosure_capability": "thin wrappers around speech-to-text, image and PDF extraction services"
+    },
+    {
+      "id": "ideation",
+      "display_name": "Ideation & Pitch Tooling",
+      "description": "PIT deck skeleton, IDEA worksheet, RETRO template + 4 Hour 48\u201372 auto-populators `ideation/deckgen/script/demodrive/faqdef`. OPENAI_API_KEY required by deckgen/script/faqdef; demodrive optionally needs PLAYWRIGHT.",
+      "requires_env": [
+        "OPENAI_API_KEY"
+      ],
+      "requires_providers": [
+        "openai",
+        "playwright"
+      ],
+      "depends_on": [
+        "resilience",
+        "provenance",
+        "profile"
+      ],
+      "gov_min_hint": "GOV-MIN-03: include if pre-pitch automation needed; otherwise manual flow suffices \u2014 default skip for minimal MVP.",
+      "sub_components": [
+        "ideation/pit",
+        "ideation/idea",
+        "ideation/retro",
+        "ideation/deckgen",
+        "ideation/script",
+        "ideation/demodrive",
+        "ideation/faqdef"
+      ],
+      "ships_in_app": false,
+      "disclosure_capability": "tooling for preparing pitch and demo materials"
+    },
+    {
+      "id": "context",
+      "display_name": "Context & Conversation Buffer",
+      "description": "Provider-agnostic message buffer + pluggable token counter (`CTX-*`).",
+      "requires_env": [],
+      "requires_providers": [],
+      "depends_on": [
+        "resilience"
+      ],
+      "gov_min_hint": "GOV-MIN-01: prevents hard context-length error mid-demo for long agent/voice runs; dependency-free heuristic default.",
+      "sub_components": [],
+      "ships_in_app": true,
+      "disclosure_capability": "a message buffer that keeps a conversation inside a model's context window, with a pluggable token counter"
+    },
+    {
+      "id": "dev-tooling",
+      "display_name": "Local Dev & Verification",
+      "description": "`dev-tooling/mock`, `eval`, `doctor`, `track`, `bench` (MOCK/EVAL/DOCTOR/TRACK/BENCH). Doctor reads `.env` but requires no new key.",
+      "requires_env": [],
+      "requires_providers": [],
+      "depends_on": [],
+      "gov_min_hint": "GOV-MIN-01: needed for offline rehearsal/staleness tracking; optional extra if team prefers manual checks (GOV-MIN-04 convenience).",
+      "sub_components": [
+        "dev-tooling/mock",
+        "dev-tooling/eval",
+        "dev-tooling/doctor",
+        "dev-tooling/track",
+        "dev-tooling/bench"
+      ],
+      "ships_in_app": false,
+      "disclosure_capability": "local developer checks and benchmarks"
+    },
+    {
+      "id": "assembly-advisory",
+      "display_name": "Assembly & Advisory (self)",
+      "description": "`ASM` + `ADV` CLI/advisor in chassis repo itself; rarely needed in working copy.",
+      "requires_env": [
+        "OPENAI_API_KEY",
+        "ANTHROPIC_API_KEY"
+      ],
+      "requires_providers": [
+        "openai",
+        "anthropic"
+      ],
+      "depends_on": [],
+      "gov_min_hint": "GOV-MIN-02: already run pre-assembly; rationale-skipped in delivered app unless event re-assembly needed.",
+      "sub_components": [],
+      "ships_in_app": false,
+      "disclosure_capability": "tooling that selects and copies the starting code blocks"
+    },
+    {
+      "id": "data",
+      "display_name": "Synthetic Demo-Data Generator",
+      "description": "On-demand synthetic data generation with `synthetic:true` marker (`DATA-*`).",
+      "requires_env": [
+        "OPENAI_API_KEY"
+      ],
+      "requires_providers": [
+        "openai"
+      ],
+      "depends_on": [
+        "resilience"
+      ],
+      "gov_min_hint": "GOV-MIN-04: dev-convenience (filling RAG corpus/demo data); marked optional extra if real data suffices.",
+      "sub_components": [],
+      "ships_in_app": true,
+      "disclosure_capability": "a generator for synthetic demo records that stamps every row as synthetic"
+    },
+    {
+      "id": "cost",
+      "display_name": "Cost & Usage Guardrail",
+      "description": "Token/request metering + budget warnings (`COST-*`), reuses `CTX-02` counter.",
+      "requires_env": [],
+      "requires_providers": [],
+      "depends_on": [
+        "context"
+      ],
+      "gov_min_hint": "GOV-MIN-04: optional extra for solo 48\u201372h build; lightweight local estimation only, no billing.",
+      "sub_components": [],
+      "ships_in_app": true,
+      "disclosure_capability": "code that counts token and request usage and warns before a configured budget is exceeded, to prevent overspending"
+    },
+    {
+      "id": "provenance",
+      "display_name": "Provenance & Disclosure",
+      "description": "Disclosure generator (`prov`) + submission formatter + repo hygiene guard (`submit`).",
+      "requires_env": [],
+      "requires_providers": [],
+      "depends_on": [
+        "resilience",
+        "platform"
+      ],
+      "gov_min_hint": "GOV-MIN-01: required when submission requires chassis-reuse/AI-tool disclosure (`XCUT-01`/`PROV-01`) or hygiene scan.",
+      "sub_components": [
+        "provenance/prov",
+        "provenance/submit"
+      ],
+      "ships_in_app": false,
+      "disclosure_capability": "tooling for generating this disclosure and the submission checklist"
+    },
+    {
+      "id": "pgm",
+      "display_name": "Problem Grounding Engine",
+      "description": "Reddit-grounded `winning_project_plan.md` producer (`PGM-*`, 4 stages). Optional REDDIT_CLIENT_ID for live tiers.",
+      "requires_env": [
+        "OPENAI_API_KEY"
+      ],
+      "requires_providers": [
+        "openai",
+        "reddit"
+      ],
+      "depends_on": [
+        "resilience"
+      ],
+      "gov_min_hint": "GOV-MIN-03: rationale-skipped post-assembly \u2014 already run pre-assembly to produce plan; not part of delivered app (NONGOAL-12).",
+      "sub_components": [],
+      "ships_in_app": false,
+      "disclosure_capability": "tooling for researching and framing the problem before the build"
+    },
+    {
+      "id": "profile",
+      "display_name": "Event Profile Extractor",
+      "description": "One-pass brief \u2192 `event_profile.json` (`PROFILE-*`).",
+      "requires_env": [
+        "OPENAI_API_KEY"
+      ],
+      "requires_providers": [
+        "openai"
+      ],
+      "depends_on": [
+        "resilience"
+      ],
+      "gov_min_hint": "GOV-MIN-03: rationale-skipped post-assembly \u2014 already run pre-assembly to extract video/disclosure facts.",
+      "sub_components": [],
+      "ships_in_app": false,
+      "disclosure_capability": "tooling for extracting the event's rules into a machine-readable profile"
+    }
+  ],
+  "$comment": " | depends_on hints added per DP-D2a-deckgen-script.md \u00a73.4/\u00a77: deterministic edge source for the DECKGEN-03 Mermaid diagram (dependency = component that must be present for this one to function; consumers filter to manifest-included ids)."
+}

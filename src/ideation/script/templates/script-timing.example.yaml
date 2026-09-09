@@ -1,0 +1,13 @@
+# Requirement IDs: SCRIPT-01, SCRIPT-REU-02, GOV-REU-02 | DP-D2a §7/§8.2
+# Module-default timing (checked-in config, NOT hardcoded minutes) — the CLI
+# falls back to this file when neither --config nor a CWD timing.yaml/timing.json
+# exists. Mirrors examples/dummy-fixtures/script/timing.example.yaml; edit or
+# point --config at your own file to change boundaries (config-only, no code).
+version: "1.0.0"
+total_minutes: 3
+sections:
+  - { id: problem,        title: "Problem",        minutes: 0.5 }
+  - { id: live-demo,      title: "Live Demo",      minutes: 1.0, live: true }
+  - { id: business-value, title: "Business Value", minutes: 1.0 }
+  - { id: team-roadmap,   title: "Team & Roadmap", minutes: 0.5 }
+# mm:ss windows (cumulative): 00:00-00:30 | 00:30-01:30 | 01:30-02:30 | 02:30-03:00 — sum 03:00 (SCRIPT-AC-01)

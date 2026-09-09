@@ -1,0 +1,8 @@
+{
+  "timeout_ms": 15000,
+  "retries": 2,
+  "backoff": { "policy": "exponential", "base_ms": 250, "factor": 2.0, "max_ms": 5000, "jitter": true },
+  "fallback_chain": { "order": ["cache", "replay", "none"], "secondary_provider": { "enabled": false }, "cache": { "enabled": true }, "replay": { "enabled": true }, "none": { "enabled": true } },
+  "cache_key_strategy": "auto",
+  "forced_degraded": false
+}

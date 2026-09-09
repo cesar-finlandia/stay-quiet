@@ -1,0 +1,36 @@
+{
+  "$comment": "Requirement IDs: SUBMIT-05, SUBMIT-REU-02, 6.19, 6.20, GOV-MIN-04, XCUT-08 | Owned by M11 (DP-J §6.1, §6.2, §11) | Checked-in default secret patterns, credential filename globs, ignore paths, and commit-distribution bucket/threshold (decided 1h / 0.8 per §11). Add/remove patterns = config-only change; externalScanner stays disabled by default (optional extra only). Validated via contracts/hygiene-config.schema.json.",
+  "version": "1.0.0",
+  "secretPatterns": [
+    { "name": "openai_sk", "regex": "sk-[A-Za-z0-9]{20,}", "enabled": true },
+    { "name": "openai_sk_proj", "regex": "sk-proj-[A-Za-z0-9_-]{20,}", "enabled": true },
+    { "name": "aws_access_key", "regex": "AKIA[0-9A-Z]{16}", "enabled": true },
+    { "name": "aws_secret_key", "regex": "(?i)aws_secret_access_key\\s*[:=]\\s*[A-Za-z0-9/+=]{30,}", "enabled": true },
+    { "name": "github_pat", "regex": "ghp_[A-Za-z0-9_]{30,}", "enabled": true },
+    { "name": "github_oauth", "regex": "gho_[A-Za-z0-9_]{30,}", "enabled": true },
+    { "name": "stripe_sk", "regex": "sk_(live|test)_[A-Za-z0-9]{20,}", "enabled": true },
+    { "name": "generic_api_key", "regex": "(?i)(api[_-]?key|apikey)\\s*[:=]\\s*['\\\"]?[A-Za-z0-9_\\-]{20,}['\\\"]?", "enabled": true },
+    { "name": "private_key_block", "regex": "-----BEGIN (?:RSA |EC |DSA )?PRIVATE KEY-----", "enabled": true }
+  ],
+  "credentialFilenames": [
+    ".env",
+    ".env.*",
+    "*.pem",
+    "*.key",
+    "*.p12",
+    "*.pfx",
+    "credentials*.json",
+    "*credentials.json",
+    "*service-account*.json",
+    "secrets*.json",
+    ".aws/*",
+    ".gcp/*",
+    ".azure/*"
+  ],
+  "ignorePaths": [
+    "examples/dummy-fixtures/**",
+    "contracts/**",
+    "hygiene-report.*"
+  ],
+  "commitDistribution": { "bucket": "1h", "threshold": 0.8 }
+}

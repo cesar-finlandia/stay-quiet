@@ -1,0 +1,10 @@
+{
+  "model_profile": "generic-heuristic",
+  "reserved_output": 1024,
+  "strategy": "sliding-window-pinned",
+  "strategy_options": {},
+  "warning_threshold": 0.8,
+  "critical_threshold": 0.95,
+  "mutate": false,
+  "compaction": null
+}

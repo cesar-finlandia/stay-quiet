@@ -1,0 +1,121 @@
+{
+  "$comment": "Requirement IDs: ADV-REU-01, ASM-04, PGM-09, GOV-MIN-03, XCUT-08 | Single source: design_documents/design_plans/DP-G-assembly-advisory-tooling.md \u00a76 | Schema for contracts/component-catalog.json (RES-04 validation target). Owned by M04.",
+  "$id": "https://chassis/contracts/component-catalog.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ComponentCatalog",
+  "description": "Single source of truth for chassis component metadata, shared by ASM (dir copy + requires_* resolution), ADV (prompt catalog injection) and PGM Stage 4 (module emphasis advisory). Never duplicate the component list elsewhere.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$id",
+    "version",
+    "components"
+  ],
+  "properties": {
+    "$id": {
+      "const": "https://chassis/contracts/component-catalog.json",
+      "description": "Catalog self-identification per DP-G \u00a76 canonical shape."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "const": "1.0.0",
+      "description": "Catalog SemVer \u2014 consumers pin MAJOR; new sub-component = MINOR (additive); rename = MAJOR."
+    },
+    "components": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "description": "Exactly twelve top-level chassis components in canonical order (DP-G \u00a76 table).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "display_name",
+          "description",
+          "requires_env",
+          "requires_providers",
+          "gov_min_hint",
+          "sub_components"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "resilience",
+              "platform",
+              "media",
+              "ideation",
+              "context",
+              "dev-tooling",
+              "assembly-advisory",
+              "data",
+              "cost",
+              "provenance",
+              "pgm",
+              "profile"
+            ],
+            "description": "Top-level component id \u2014 mirrors assembly-manifest.schema.json enum's 12 parent ids."
+          },
+          "display_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "description": "One-line description injected into the ADV prompt via {{catalog}} (ADV-REU-01); must stay domain-free (GOV-REU-02)."
+          },
+          "requires_env": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Z][A-Z0-9_]*$"
+            },
+            "description": "Env var names required when this component is included. Single place these are declared; ASM-04 copies into manifest at assembly time (DOCTOR-REU-01 reads manifest, never catalog)."
+          },
+          "requires_providers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Provider/service names required when included (e.g. openai). Used by PROV-01 disclosure and COST/TRACK."
+          },
+          "depends_on": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Top-level component ids this component requires. ASM resolves the dependency closure from this field (ASM-AC-01); ADV must not propose a component whose depends_on entries are excluded."
+          },
+          "gov_min_hint": {
+            "type": "string",
+            "minLength": 1,
+            "description": "GOV-MIN justification hint from DP-G \u00a76 table \u2014 smallest-viable rationale for include/exclude."
+          },
+          "sub_components": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Slash-form sub-component ids (6.17 granularity) enumerated for filter-copy; empty for leaf components."
+          },
+          "ships_in_app": {
+            "type": "boolean",
+            "description": "Does this component's SOURCE run inside the shipped application? Authoring/pipeline tooling is false. Consumed by the disclosure generator to decide which reused blocks get a capability bullet. Optional: absent means fall back to the generator's default set."
+          },
+          "disclosure_capability": {
+            "type": "string",
+            "minLength": 10,
+            "description": "One plain-English clause describing what this reused code does, with no repository name, no module id and no requirement codes. This is the exact text disclosure.md prints. Optional: absent means the generator derives a clause from `description`."
+          }
+        }
+      }
+    },
+    "$comment": {
+      "type": "string",
+      "description": "Provenance/requirement header carried by the catalog file itself."
+    }
+  }
+}

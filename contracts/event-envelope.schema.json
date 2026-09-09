@@ -1,0 +1,56 @@
+{
+  "$id": "https://chassis/contracts/event-envelope.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "Requirement IDs: TRN-01, TRN-02, TRN-06 | Single source of truth for shared contract #1 (DP-B §3.1). Envelope strict, payload open. No domain noun may become a first-class field.",
+  "title": "EventEnvelope",
+  "description": "Generic live-process event — TRN-01/TRN-02/TRN-06. No domain noun is a first-class field; payload is arbitrary.",
+  "version": "1.0.0",
+  "x-version": "1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["step_id", "status", "payload", "timestamp", "sequence"],
+  "properties": {
+    "step_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "Opaque kebab-case step identifier. No semantics enforced. Examples: retrieval-pass, widget-overview, synthesis."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["started", "streaming", "done", "error"],
+      "description": "Lifecycle value for the step. started → (0..n streaming) → done|error. No other values permitted."
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Arbitrary domain payload. Envelope never interprets it. May be {} or contain delta/content degraded markers. No domain noun at envelope top-level."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Producer ISO-8601 UTC timestamp, e.g. 2026-03-11T14:22:05.123Z"
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Monotone per-trace sequence counter. Used for ordering and optional reconnect replay extension. No gap tolerance required in v1."
+    },
+    "trace_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Optional correlation id across steps of one run. UUID v4."
+    },
+    "degraded": {
+      "type": "boolean",
+      "default": false,
+      "description": "True only if payload is (or contains) a DegradedResult per DP-A contracts/degraded-result.schema.json. UI-RES-02 checks degraded===true. Defaults to false."
+    }
+  },
+  "$defs": {
+    "DegradedResultRef": {
+      "$ref": "https://chassis/contracts/degraded-result.schema.json"
+    }
+  }
+}

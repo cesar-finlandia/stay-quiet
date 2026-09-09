@@ -1,0 +1,192 @@
+{
+  "manifest_version": "1.0.0",
+  "created_at": "2026-09-09T21:42:56.285Z",
+  "chassis_version": "v0.0.0-unresolved",
+  "components": [
+    {
+      "id": "resilience",
+      "included": true,
+      "version": "1.0.0",
+      "requires_env": [],
+      "requires_providers": []
+    },
+    {
+      "id": "platform",
+      "included": true,
+      "version": "1.0.0",
+      "requires_env": [
+        "VERCEL_TOKEN",
+        "VERCEL_PROJECT_ID"
+      ],
+      "requires_providers": [
+        "vercel"
+      ]
+    },
+    {
+      "id": "media",
+      "included": false,
+      "version": "1.0.0",
+      "requires_env": [
+        "OPENAI_API_KEY"
+      ],
+      "requires_providers": [
+        "openai",
+        "replicate",
+        "elevenlabs"
+      ]
+    },
+    {
+      "id": "ideation",
+      "included": true,
+      "version": "1.0.0",
+      "requires_env": [
+        "OPENAI_API_KEY"
+      ],
+      "requires_providers": [
+        "openai",
+        "playwright"
+      ]
+    },
+    {
+      "id": "context",
+      "included": true,
+      "version": "1.0.0",
+      "requires_env": [],
+      "requires_providers": []
+    },
+    {
+      "id": "dev-tooling",
+      "included": false,
+      "version": "1.0.0",
+      "requires_env": [],
+      "requires_providers": []
+    },
+    {
+      "id": "assembly-advisory",
+      "included": false,
+      "version": "1.0.0",
+      "requires_env": [
+        "OPENAI_API_KEY",
+        "ANTHROPIC_API_KEY"
+      ],
+      "requires_providers": [
+        "openai",
+        "anthropic"
+      ]
+    },
+    {
+      "id": "data",
+      "included": true,
+      "version": "1.0.0",
+      "requires_env": [
+        "OPENAI_API_KEY"
+      ],
+      "requires_providers": [
+        "openai"
+      ]
+    },
+    {
+      "id": "cost",
+      "included": true,
+      "version": "1.0.0",
+      "requires_env": [],
+      "requires_providers": []
+    },
+    {
+      "id": "provenance",
+      "included": true,
+      "version": "1.0.0",
+      "requires_env": [],
+      "requires_providers": []
+    },
+    {
+      "id": "pgm",
+      "included": false,
+      "version": "1.0.0",
+      "requires_env": [
+        "OPENAI_API_KEY"
+      ],
+      "requires_providers": [
+        "openai",
+        "reddit"
+      ]
+    },
+    {
+      "id": "profile",
+      "included": false,
+      "version": "1.0.0",
+      "requires_env": [
+        "OPENAI_API_KEY"
+      ],
+      "requires_providers": [
+        "openai"
+      ]
+    }
+  ],
+  "selection_rationale": [
+    {
+      "id": "resilience",
+      "decision": "include",
+      "reason": "Wraps Strands calls for \"Build a new AI agent with Strands Agents\" ensuring degraded-live demo survives failures."
+    },
+    {
+      "id": "platform",
+      "decision": "include",
+      "reason": "Provides public URL for \"live demo and/or AgentCore deployment strengthen this score\" per Technical Implementation."
+    },
+    {
+      "id": "media",
+      "decision": "exclude",
+      "reason": "No voice/vision/PDF mandate; accept risk of losing Design points if policy-scan needs PDF parsing, no disqualification."
+    },
+    {
+      "id": "ideation",
+      "decision": "include",
+      "reason": "Builds video/deck/script for \"must cover: (1) the problem you're solving (2) who it's for\" Presentation gate."
+    },
+    {
+      "id": "context",
+      "decision": "include",
+      "reason": "Buffers long runs for \"agent runs autonomously and only surfaces when there is a real decision\" background promise."
+    },
+    {
+      "id": "dev-tooling",
+      "decision": "exclude",
+      "reason": "No mock/eval mandate; accept risk of losing Technical Implementation robustness without local eval, no disqualification."
+    },
+    {
+      "id": "assembly-advisory",
+      "decision": "exclude",
+      "reason": "No advisor CLI mandate in working copy; accept risk of losing build velocity, no judged-axis or disqualification risk."
+    },
+    {
+      "id": "data",
+      "decision": "include",
+      "reason": "Seeds bookings/policies for \"handle it end to end, not just chat about it\" offline judge demo resilience."
+    },
+    {
+      "id": "cost",
+      "decision": "include",
+      "reason": "Meters Bedrock use against \"$50 in AWS Promotional Credits for the purpose of completing\" to prevent burn."
+    },
+    {
+      "id": "provenance",
+      "decision": "include",
+      "reason": "Generates disclosure for \"must disclose any other pre-existing code or work incorporated\" Rules pass/fail gate."
+    },
+    {
+      "id": "pgm",
+      "decision": "exclude",
+      "reason": "pgm is pre-assembly market research only, never part of the delivered app (NONGOAL-12)"
+    },
+    {
+      "id": "profile",
+      "decision": "exclude",
+      "reason": "already run pre-assembly, not part of delivered app - no judged axis needs re-extraction"
+    }
+  ],
+  "git": {
+    "initialized": true,
+    "baseline_commit": "8a75719a792bb825154cae378a7585edcd802fb5"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "$comment": "Requirement IDs: CTX-02, CTX-REU-01, GOV-MIN-04 | Marks src/context as native ESM (NodeNext) so import.meta resolves; mirrors the resilience workspace-package pattern (M01 step 1). Zero required runtime deps by design (GOV-MIN-04); js-tiktoken stays optional.",
+  "name": "context",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node scripts/run-tests.mjs",
+    "bench": "node scripts/run-bench.mjs"
+  }
+}

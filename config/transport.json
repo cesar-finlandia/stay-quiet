@@ -1,0 +1,4 @@
+{
+  "$comment": "Requirement IDs: TRN-03, GOV-RES-02 | Transport selection knob (DP-B §8). Values: \"sse\" | \"websocket\" | \"none\". TRANSPORT env overrides this file. Unknown values fall back to \"sse\" with a console.warn — never crash.",
+  "transport": "sse"
+}

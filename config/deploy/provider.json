@@ -1,0 +1,4 @@
+{
+  "$comment": "Requirement IDs: DEP-01, DEP-REU-01 | DP-B §8 — default deploy provider; overridden by DEPLOY_PROVIDER env at runtime.",
+  "provider": "vercel"
+}

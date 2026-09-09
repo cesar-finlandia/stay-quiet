@@ -1,0 +1,17 @@
+{
+  "$comment": "Requirement IDs: DEP-01, DEP-02, DEP-REU-01 | DP-B §5.1 — Vercel project settings; ASM-02 copies this file verbatim into the working copy so a fresh assembly needs zero hand-edit. No secrets here: VERCEL_TOKEN / VERCEL_PROJECT_ID come from .env (config/env.example).",
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm ci",
+  "headers": [
+    {
+      "source": "/events",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-transform" },
+        { "key": "X-Accel-Buffering", "value": "no" }
+      ]
+    }
+  ]
+}

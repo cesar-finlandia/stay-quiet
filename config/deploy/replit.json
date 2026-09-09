@@ -1,0 +1,7 @@
+{
+  "$comment": "Requirement IDs: DEP-REU-01 | DP-B §5.1 — Replit provider descriptor; swap via DEPLOY_PROVIDER=replit npm run deploy. Adapter wires .replit from this file; no secrets (uses REPL_ID / REPLIT_TOKEN from env).",
+  "provider": "replit",
+  "runCommand": "npm run dev",
+  "deployCommand": "replit deploy",
+  "language": "nodejs"
+}
