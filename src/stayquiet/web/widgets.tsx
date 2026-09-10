@@ -242,20 +242,28 @@ export function Stat(props: StatProps): JSX.Element {
 export type QuietWorkBarProps = { affected: number; scanned: number };
 
 /**
- * The "handled quietly" proof: one bar where the filled part is what needed the
- * host and the rest is what did not. This is the product's core claim rendered
- * as a shape, and it is the single most persuasive element on the quiet screen.
+ * The "quiet work" proof: one bar where the filled part is what needed working
+ * and the rest is what the policy diff never touched. This is the product's core
+ * claim rendered as a shape, and it is the single most persuasive element on the
+ * quiet screen.
+ *
+ * The legend deliberately says "needed no work" rather than "handled quietly":
+ * `scanned - affected` is the set of bookings no changed clause applied to, which
+ * is a different number from the `Handled quietly` stat tile (`run.quiet_actions`
+ * — actions the agent filed and logged without asking). Both are true; using the
+ * same words for both put two contradictory numbers on one screen.
  */
 export function QuietWorkBar(props: QuietWorkBarProps): JSX.Element {
   const { affected, scanned } = props;
   const total = scanned > 0 ? scanned : 1;
   const pct = Math.min(100, Math.round((affected / total) * 100));
+  const untouched = Math.max(0, scanned - affected);
   return (
     <div className="sq-quietbar">
       <div
         className="sq-quietbar__track"
         role="img"
-        aria-label={`${affected} of ${scanned} bookings needed work; the rest were handled quietly`}
+        aria-label={`${affected} of ${scanned} bookings needed work; the remaining ${untouched} needed none`}
       >
         <span className="sq-quietbar__fill" style={{ ["--sq-pct" as string]: `${pct}%` }} />
       </div>
@@ -263,7 +271,7 @@ export function QuietWorkBar(props: QuietWorkBarProps): JSX.Element {
         <span className="sq-quietbar__key sq-quietbar__key--worked" />
         {affected} worked
         <span className="sq-quietbar__key sq-quietbar__key--quiet" />
-        {Math.max(0, scanned - affected)} handled quietly
+        {untouched} needed no work
       </p>
     </div>
   );

@@ -1406,6 +1406,25 @@ html[data-sq-mode="dark"] .sq-theme-toggle__core {
   color: var(--sq-fg-muted);
 }
 
+/*
+  The shared StepStatusIndicator renders its degraded state as the two raw
+  fallback tokens it receives — "cache" and "served_from_golden_cache". Those are
+  machine words a host should never be shown, and the pill they sit in is an exact
+  visual twin of the "Latest draft" degraded chip a few pixels below it, so the
+  monitor panel showed the same amber message twice in a row.
+
+  The shared banner is therefore suppressed inside the monitor panel only. The
+  degraded state is not lost: the chip on the latest draft carries it in the
+  product's own words and is marked role="status" in QuietMonitor.tsx so it is
+  still announced, every decision card repeats it, and the header shows the
+  "recorded demo" badge for the whole session.
+
+  Scoped to .sq-panel so any other consumer of the shared component is untouched.
+*/
+.sq-panel .degraded-banner {
+  display: none;
+}
+
 /* ──────────────────────────────  Latest draft  ───────────────────────────── */
 
 .sq-draft {

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920, initial-scale=1">
+<title>StayQuiet — Slide 2: Solution and measured impact</title>
+<style>
+  :root{
+    --paper:#faf7f2; --card:#ffffff; --ink:#1c1a17; --muted:#6b6459;
+    --hairline:#e6ded1; --green:#0f6f65; --amber:#b0510b;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .slide{width:1920px; height:1080px; display:flex; flex-direction:column;
+    padding:64px 96px 56px; overflow:hidden;}
+  .kicker{
+    font-size:26px; letter-spacing:6px; color:var(--muted);
+    text-transform:uppercase; margin-bottom:20px;
+  }
+  .kicker .dot{display:inline-block; width:14px; height:14px; border-radius:50%;
+    background:var(--green); margin-right:14px; vertical-align:baseline;}
+  h1{
+    font-family:Georgia,"Times New Roman",serif; font-weight:700;
+    font-size:64px; line-height:1.1; margin-bottom:8px; max-width:1650px;
+  }
+  .graphic{flex:1; min-height:0; display:flex; align-items:center; justify-content:center; padding:8px 0;}
+  .graphic img{max-width:100%; max-height:100%; object-fit:contain;}
+  .stats{display:flex; gap:24px; margin-top:16px;}
+  .stat{
+    flex:1; background:var(--card); border:1px solid var(--hairline);
+    border-top:6px solid var(--green); padding:18px 24px 14px;
+  }
+  .stat.ask{border-top-color:var(--amber);}
+  .stat .n{font-family:Georgia,"Times New Roman",serif; font-size:64px; line-height:1;}
+  .stat .l{font-size:24px; color:var(--muted); margin-top:6px;}
+  .foot{margin-top:20px; font-size:25px; color:var(--muted); font-style:italic;}
+  .foot strong{color:var(--ink); font-style:normal;}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="kicker"><span class="dot"></span>The solution &middot; measured on the demo dataset</div>
+  <h1>It works the ones that changed, and asks about almost none of them.</h1>
+  <div class="graphic"><img src="./slide2-graphic.png" alt="Six bookings narrowed through two gates to three decisions and one quietly handled"></div>
+  <div class="stats">
+    <div class="stat"><div class="n">6</div><div class="l">Bookings scanned</div></div>
+    <div class="stat"><div class="n">4</div><div class="l">Actually needed work</div></div>
+    <div class="stat ask"><div class="n">3</div><div class="l">Reached the host</div></div>
+    <div class="stat"><div class="n">1</div><div class="l">Handled quietly</div></div>
+    <div class="stat"><div class="n">4</div><div class="l">Policy clauses changed</div></div>
+  </div>
+  <div class="foot"><strong>Deterministic Python decides <em>who</em> gets interrupted.</strong> The model decides only <em>how</em> it is worded. Modelled exposure figures are weightings of a booking&rsquo;s payout, not bills.</div>
+</div>
+</body>
+</html>

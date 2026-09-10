@@ -47,8 +47,10 @@ def clause_lookup(clause_id: str) -> dict:
                  {"clause_id": cid, "change_kind": result["change_kind"],
                   "money_related": result["money_related"],
                   "chars": len(result["current_text"] or ""),
+                  # Full clause text, not a prefix — see the note in policy.py:
+                  # a grounding panel that stops mid-sentence is misleading.
                   "citations": [{"title": f"{result['title']} ({cid})",
-                                 "snippet": (result["current_text"] or "")[:220]}]})
+                                 "snippet": result["current_text"] or ""}]})
         return result
     except Exception as err:
         tool_error("clause_lookup", str(err))

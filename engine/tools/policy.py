@@ -102,10 +102,25 @@ def policy_diff() -> dict:
                   "latest_captured_at": snaps[-1]["captured_at"],
                   "changed_count": len(slim),
                   "changes": slim}
+        # Citations carry the CURRENT text of each changed clause. The diff has
+        # already loaded it, so this costs nothing and — unlike clause_lookup,
+        # which only runs when the model chooses to call it — it is emitted on
+        # every cycle, including one served entirely from the golden cache. That
+        # is what keeps the monitor's "Policy text this was grounded in" panel
+        # populated offline. A removed clause has no current text and is skipped
+        # rather than shown with stale wording.
+        # The whole clause, not a prefix: the longest in the corpus is 300
+        # characters, and a panel headed "Policy text this was grounded in" that
+        # stops mid-sentence is worse than no panel — the host cannot tell whether
+        # the rule continues.
+        citations = [{"title": f"{c['title']} ({c['clause_id']})",
+                      "snippet": c["latest_text"]}
+                     for c in changes if c.get("latest_text")]
         tool_end("policy_diff", {"changed_count": len(slim),
                                  "clause_ids": [c["clause_id"] for c in slim],
                                  "money_related": [c["clause_id"] for c in slim
-                                                   if c["money_related"]]})
+                                                   if c["money_related"]],
+                                 "citations": citations})
         return result
     except Exception as err:
         tool_error("policy_diff", str(err))

@@ -3,7 +3,6 @@ import type { JSX } from "react";
 import type { EventEnvelope } from "src/platform/transport/event-envelope.js";
 import { CitationDisplay } from "src/platform/ui/CitationDisplay.js";
 import { StepStatusIndicator } from "src/platform/ui/StepStatusIndicator.js";
-import { StreamingTextRenderer } from "src/platform/ui/StreamingTextRenderer.js";
 import { STEP_LABELS } from "./labels.js";
 import type { AppState } from "./api.js";
 import {
@@ -146,19 +145,25 @@ export function QuietMonitor(props: QuietMonitorProps): JSX.Element {
           showSequence={false}
         />
 
-        <StreamingTextRenderer
-          envelopes={envelopes.filter((e) => e.step_id === "draft_reply")}
-          emptyText="No draft yet."
-          degradedText="Degraded — served from the recorded cache"
-          showCursor
-        />
-
+        {/*
+          No StreamingTextRenderer here. Nothing in this product ever emits a
+          "streaming" status — draft_reply emits only "started" and "done" — so it
+          could never render a partial draft. What it did render was a second copy
+          of the degraded state (as the raw tokens "cache" / "served_from_golden_cache")
+          above the figure below, which already shows the settled draft with the
+          degraded chip in the host's own words.
+        */}
         {latestDraftText ? (
           <figure className="sq-draft">
             <figcaption>
               Latest draft
               {latestDraftDegraded ? (
-                <span className="sq-degraded">Degraded — served from the recorded cache</span>
+                // role="status" because the shared component's own degraded banner is
+                // suppressed inside this panel (see stayquiet.css) — this chip is now
+                // the announced one.
+                <span className="sq-degraded" role="status">
+                  Degraded — served from the recorded cache
+                </span>
               ) : null}
             </figcaption>
             <blockquote>{latestDraftText}</blockquote>

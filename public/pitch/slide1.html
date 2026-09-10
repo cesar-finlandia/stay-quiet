@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920, initial-scale=1">
+<title>StayQuiet — Slide 1: The problem</title>
+<style>
+  :root{
+    --paper:#faf7f2; --card:#ffffff; --ink:#1c1a17; --muted:#6b6459;
+    --hairline:#e6ded1; --green:#0f6f65; --amber:#b0510b;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .slide{width:1920px; height:1080px; display:flex; overflow:hidden;}
+  .text{width:37%; padding:84px 56px 84px 96px; display:flex; flex-direction:column; justify-content:center;}
+  .kicker{
+    font-size:26px; letter-spacing:6px; color:var(--muted);
+    text-transform:uppercase; margin-bottom:28px;
+  }
+  .kicker .dot{display:inline-block; width:14px; height:14px; border-radius:50%;
+    background:var(--amber); margin-right:14px; vertical-align:baseline;}
+  h1{
+    font-family:Georgia,"Times New Roman",serif; font-weight:700;
+    font-size:76px; line-height:1.08; margin-bottom:44px;
+  }
+  ul{list-style:none;}
+  li{
+    font-size:30px; line-height:1.35; padding:16px 0 16px 34px;
+    border-top:1px solid var(--hairline); position:relative; color:var(--ink);
+  }
+  li:last-child{border-bottom:1px solid var(--hairline);}
+  li::before{
+    content:""; position:absolute; left:4px; top:29px;
+    width:13px; height:13px; border-radius:50%; background:var(--amber);
+  }
+  li.time::before{background:var(--amber);}
+  li .qual{display:block; font-size:23px; color:var(--muted); font-style:italic;}
+  li.stale::before{background:var(--muted);}
+  .graphic{width:63%; display:flex; align-items:center; justify-content:center; padding:48px 64px 48px 0;}
+  .graphic img{width:100%; height:100%; object-fit:contain;}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="text">
+    <div class="kicker"><span class="dot"></span>The problem</div>
+    <h1>Tuesday morning. Three listings, three problems.</h1>
+    <ul>
+      <li>A guest wants to split a payment the platform now handles differently</li>
+      <li>A cleaner is disputing a checkout task</li>
+      <li>A cancellation quotes a refund rule that moved last month</li>
+      <li class="time">45&ndash;90 minutes per booking <span class="qual">(research assumption)</span></li>
+      <li class="stale">Saved snippets go stale the moment the policy text changes</li>
+    </ul>
+  </div>
+  <div class="graphic"><img src="./slide1-graphic.png" alt="Overwhelmed desk of message threads beside an empty clock showing consumed time"></div>
+</div>
+</body>
+</html>
