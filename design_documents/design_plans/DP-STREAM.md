@@ -8,8 +8,18 @@ Must already exist (produced by **DP-FOUND**):
 * `src/stayquiet/__init__.py`.
 * `requirements.txt` installed (`jsonschema` is used here).
 
-Pre-existing and read-only: `src/platform/transport/event_envelope.py` (the frozen envelope
-type), `contracts/event-envelope.schema.json` (the frozen schema).
+Pre-existing and read-only: `src/platform/transport/event_envelope.py` (the generated envelope
+type), `contracts/event-envelope.schema.json` (the envelope schema).
+
+**Contract note — `contracts/event-envelope.schema.json` is at v1.1.0.** Its v1.0.0 `step_id`
+pattern was `^[a-z0-9]+(-[a-z0-9]+)*$`, kebab-case only, which rejected every id in the §3.1
+vocabulary. The pattern is now `^[a-z0-9]+([-_][a-z0-9]+)*$`, accepting `-` or `_` as the word
+separator. This is a MINOR widening: every id valid under v1.0.0 is still valid, uppercase, spaces,
+leading, trailing and doubled separators are still rejected, and the field's own description says it
+carries no semantics. The rationale, and the confirmation that no consumer depended on the
+restriction, are recorded in the file's `$comment`. Do not narrow it back, and do not work around it
+by rewriting ids inside `emit()` — DP-AGENT, DP-API and DP-UI all assert the underscore ids
+literally.
 
 Not needed and deliberately unused: `src/platform/transport/stream_router.py`. Its own header says
 `ILLUSTRATIVE WIRING`, and its `publish()` is `async`, which cannot be called from the synchronous
@@ -46,7 +56,8 @@ decision, readable in the UI and on disk), **SQ-F-10** (every step streams as a 
 | `engine/agents/**` | DP-AGENT |
 | `src/stayquiet/api.py`, the SSE route, the REST routes | DP-API |
 | `src/stayquiet/web/**` | DP-UI |
-| `contracts/event-envelope.schema.json`, `src/platform/transport/**` | pre-existing — read-only |
+| `src/platform/transport/**` | pre-existing — read-only |
+| `contracts/event-envelope.schema.json` | pre-existing; already amended to v1.1.0 per §0 — do not edit it again |
 
 None of these three files may import from `engine/`, may call a model, or may decide *whether* a
 booking is escalated. `store.py` records decisions; DP-AGENT decides them.
@@ -82,6 +93,9 @@ from src.platform.transport.event_envelope import EventEnvelope
 RING_CAPACITY: int = 2000
 
 #: The closed step_id vocabulary (blueprint §2.3). emit() warns on anything else.
+#: Underscored on purpose: these ids are also the Python tool names the agent loop
+#: calls, so one vocabulary serves the tool, its progress envelope and its UI label.
+#: contracts/event-envelope.schema.json v1.1.0 accepts them (see §0).
 STEP_IDS: tuple[str, ...] = (
     "cycle",
     "policy_fetch",
@@ -532,9 +546,25 @@ print([e['sequence'] for e in envelopes(t)], len(since(1, t)), snapshot(t)['degr
 ```
 [1, 2, 3] 2 True complete
 ```
-**What it proves.** Every envelope validates against the frozen
-`contracts/event-envelope.schema.json`, `sequence` is monotonic, `since()` returns only newer
+**What it proves.** Every envelope validates against `contracts/event-envelope.schema.json`
+(v1.1.0 — see the contract note in §0), `sequence` is monotonic, `since()` returns only newer
 envelopes, and the fallback snapshot reports degraded correctly.
+
+Run this too, once: it validates every id in the closed vocabulary rather than the three this work
+unit happens to emit, so a future addition to `STEP_IDS` cannot slip past the schema.
+
+```bash
+python -c "
+import json, jsonschema
+from src.stayquiet.publish import STEP_IDS, emit, new_trace_id, envelopes, reset
+reset(); t=new_trace_id()
+for s in STEP_IDS: emit(s,'done',{},trace_id=t)
+schema=json.load(open('contracts/event-envelope.schema.json',encoding='utf-8'))
+[jsonschema.validate(e,schema) for e in envelopes(t)]
+print('validated', len(STEP_IDS), 'ids')"
+```
+
+Expected: `validated 12 ids`.
 
 ---
 

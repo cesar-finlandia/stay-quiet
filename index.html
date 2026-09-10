@@ -1,16 +1,52 @@
 <!doctype html>
-<!-- Requirement IDs: UI-03, UI-06, UI-AC-02 | DP-B §10.8 item 1 -->
-<!-- Minimal dev shell for the platform UI library: THEME env selects the
-     theme at bootstrap (single config change); layout is single-focus per
-     docs/ui-layout.md. Not a product app — demo/smoke surface only. -->
-<html lang="en">
+<html lang="en" data-sq-mode="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Platform UI — dev shell</title>
+    <meta
+      name="description"
+      content="StayQuiet — a background agent for independent short-stay hosts. It watches policy changes and your bookings, drafts what you would have written, and only asks when the decision is yours."
+    />
+    <meta name="theme-color" content="#faf7f2" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0d1413" media="(prefers-color-scheme: dark)" />
+    <title>StayQuiet — background agent for short-stay hosts</title>
+
+    <!-- Wordmark glyph: the quiet beacon, inlined so there is no favicon request. -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f6f65'/%3E%3Ccircle cx='16' cy='16' r='10' fill='none' stroke='%23a7ded6' stroke-width='1.4' opacity='.55'/%3E%3Ccircle cx='16' cy='16' r='6' fill='none' stroke='%23d3f0eb' stroke-width='1.6' opacity='.8'/%3E%3Ccircle cx='16' cy='16' r='2.6' fill='%23f2f9f8'/%3E%3C/svg%3E"
+    />
+
+    <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/inter.woff2" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/fraunces.woff2" crossorigin />
+
+    <!--
+      Colour-mode boot. Runs before the first paint so a host who chose Night
+      Desk never gets a white flash on reload. Mirrors readPreference() in
+      src/stayquiet/web/theme.ts — keep the two in step.
+    -->
+    <script>
+      (function () {
+        try {
+          var stored = null;
+          try {
+            stored = window.localStorage.getItem("stayquiet:color-mode");
+          } catch (e) {}
+          var mode =
+            stored === "light" || stored === "dark"
+              ? stored
+              : window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light";
+          document.documentElement.setAttribute("data-sq-mode", mode);
+        } catch (e) {
+          document.documentElement.setAttribute("data-sq-mode", "light");
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/examples/ui/dev-main.tsx"></script>
+    <script type="module" src="/src/stayquiet/web/main.tsx"></script>
   </body>
 </html>

@@ -18,6 +18,7 @@
     "test:context": "pnpm -F context run test",
     "dev": "vite",
     "build:ui": "vite build",
+    "build:bridge": "npx esbuild engine/bridge/context_fit.ts --bundle --platform=node --format=esm --outfile=dist/bridge/context_fit.mjs --alias:src=./src",
     "mock:publish": "vite-node scripts/mock-publish.ts",
     "demodrive": "vite-node src/ideation/demodrive/cli.ts",
     "demodrive:capture": "vite-node src/ideation/demodrive/cli.ts",

@@ -1,0 +1,45 @@
+{
+  "version": "1.0.0",
+  "base_url": "http://127.0.0.1:8080",
+  "viewport": { "width": 1280, "height": 800 },
+  "layout": "single-focus",
+  "theme": "operator",
+  "data_source": { "kind": "cache" },
+  "steps": [
+    {
+      "id": "load-and-progress",
+      "description": "Load the app and wait for the background cycle's progress list to fill.",
+      "actions": [
+        { "action": "navigate", "value": "/" },
+        { "action": "wait_for", "selector": "text=What the agent is doing", "timeout_ms": 30000 },
+        { "action": "screenshot" }
+      ]
+    },
+    {
+      "id": "decision-cards",
+      "description": "Wait for the three decision cards, then screenshot them.",
+      "actions": [
+        { "action": "wait_for", "selector": "text=Needs your decision", "timeout_ms": 60000 },
+        { "action": "wait_for", "selector": "button:Approve and file", "timeout_ms": 60000 },
+        { "action": "screenshot" }
+      ]
+    },
+    {
+      "id": "approve-first",
+      "description": "Click Approve and file on the first card, then screenshot the resolved state.",
+      "actions": [
+        { "action": "click", "selector": "button:Approve and file" },
+        { "action": "wait_for", "selector": "text=host_decision", "timeout_ms": 15000 },
+        { "action": "screenshot" }
+      ]
+    },
+    {
+      "id": "audit-trail",
+      "description": "Scroll to the audit trail and screenshot it.",
+      "actions": [
+        { "action": "wait_for", "selector": "text=Audit trail", "timeout_ms": 15000 },
+        { "action": "screenshot" }
+      ]
+    }
+  ]
+}

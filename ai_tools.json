@@ -1,0 +1,10 @@
+[
+  {
+    "tool": "Claude Opus 5 (Anthropic)",
+    "scope": "authored the design plans this project was built from, and reviewed and amended them to resolve implementation conflicts"
+  },
+  {
+    "tool": "Muse Spark (Meta, via OpenCode)",
+    "scope": "implemented the application code from those design plans and verified each work unit"
+  }
+]

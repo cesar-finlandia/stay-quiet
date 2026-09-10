@@ -163,15 +163,38 @@ def cost_snapshot() -> dict:
     """
 
 
+def _normalize_cache_key(cache_key: str) -> str:
+    """Map a human-readable cache key to the 64-char hex the golden cache needs.
+
+    The pre-existing GoldenCache accepts ONLY 64-char lowercase hex keys: its
+    `_resolve_key_location` warns and returns None for anything else, so `put`
+    silently refuses and `get` always misses. A key that is already valid hex
+    passes through; any other string is hashed with sha256 - the same derivation
+    the cache's own explicit-key mode documents (`derive_key_standalone`:
+    "Explicit-key mode hashes the caller kebab-case key once"). Callers therefore
+    keep using readable keys everywhere. Never raises.
+    """
+
+
 def record_golden(cache_key: str, text: str) -> None:
     """Write one model reply into the committed golden cache under `cache_key`, in
     the exact shape run_agent()'s cache path expects. Used by the recording script
-    so the offline demo path has real content. Never raises."""
+    so the offline demo path has real content. Never raises.
+
+    `cache_key` is the readable name; it is normalized for the filename and also
+    stored verbatim in the entry's `explicit_key` metadata field, which is what
+    keeps the cache's `golden-index.json` manifest human-readable.
+    """
 
 
 def golden_keys() -> list[str]:
     """Sorted list of the cache keys currently present in the golden cache. Used by
-    the recording script to report coverage. Never raises."""
+    the recording script to report coverage. Never raises.
+
+    Reports the readable name recorded in each manifest entry's `explicit_key`
+    field when one exists, and the hex filename otherwise - so a caller sees
+    `draft::BK-1044::2026-09-08`, not a sha256 digest.
+    """
 ```
 
 ### 3.2 `src/stayquiet/context_bridge.py`
@@ -345,10 +368,19 @@ cost meter keeps per-wrapper edge-trigger state, so it must NOT be rebuilt per c
                           "cache": {"enabled": True}, "none": {"enabled": True}},
        "forced_degraded": bool(cfg["demo_mode"]),
    }
-   deps = {"cache_key": cache_key, "cache": _cache()}
+   deps = {"cache_key": _normalize_cache_key(cache_key), "cache": _cache()}
    ```
    `_cache()` returns a module-level `create_golden_cache(str(repo_root() / cfg["golden_cache_dir"]))`,
    created once.
+
+   **Why the key is normalized here.** The resilience wrapper hands
+   `deps["cache_key"]` to the cache *verbatim* - its `_resolve_base_key` returns
+   the string unhashed - and the cache accepts only 64-char lowercase hex.
+   `_normalize_cache_key` closes that gap using the cache's own documented
+   explicit-key derivation, so every caller in this repository keeps passing
+   readable keys such as `draft::BK-1044::2026-09-08`. Do NOT hand the raw
+   readable key to resilience: the cache would warn, refuse the write and miss on
+   every read, silently disabling the whole offline demo path.
    Building the resilience wrapper per call is intentional and cheap: the cache key differs per
    call and resilience resolves its config once per wrapper.
 3. `raw = guarded(agent, prompt)`.
@@ -381,14 +413,30 @@ cost meter keeps per-wrapper edge-trigger state, so it must NOT be rebuilt per c
 
 ### §5.7 `record_golden(cache_key, text)` and `golden_keys()`
 
-`record_golden`:
-1. `_cache().put(cache_key, {"text": text, "input_tokens": None, "output_tokens": None,
-   "source": "cache"}, {"provider": PROVIDER_TAG, "model": load_app_config()["model_id"],
-   "source": "recorded"})`.
-2. Wrap in `try/except Exception`, printing `[stayquiet] could not record {cache_key}: {err}`.
+`_normalize_cache_key(cache_key)`:
+1. If `len(cache_key) == 64` and every character is in `"0123456789abcdef"`, return it unchanged.
+2. Otherwise return `hashlib.sha256(cache_key.encode("utf-8")).hexdigest()`.
+3. Wrap both in `try/except Exception` returning
+   `hashlib.sha256(repr(cache_key).encode("utf-8")).hexdigest()`.
 
-`golden_keys`:
-1. `return sorted(_cache().list().keys())` inside `try/except Exception` returning `[]`.
+`record_golden(cache_key, text)`:
+1. `normalized = _normalize_cache_key(cache_key)`.
+2. `meta = {"provider": PROVIDER_TAG, "model": load_app_config()["model_id"], "source": "recorded"}`;
+   when `normalized != cache_key`, also set `meta["explicit_key"] = cache_key`. The cache's own
+   README asks for exactly this: *"pass `{ explicit_key }` in `put` meta so the readable form lands
+   in `golden-index.json`."*
+3. `_cache().put(normalized, {"text": text, "input_tokens": None, "output_tokens": None,
+   "source": "cache"}, meta)`.
+4. Wrap in `try/except Exception`, printing `[stayquiet] could not record {cache_key}: {err}`.
+
+`golden_keys()`:
+1. Read `repo_root() / cfg["golden_cache_dir"] / "golden-index.json"` and its `entries` object.
+   For each `hex_key -> entry`, collect `entry["explicit_key"]` when it is a string, else `hex_key`;
+   remember every `hex_key` seen.
+2. Add any key from `_cache().list()` that step 1 did not already report under a readable name.
+3. Return the collected names `sorted()`.
+4. Each step is individually wrapped in `try/except Exception`; the function returns `[]` on total
+   failure and never raises.
 
 ### §5.8 `engine/bridge/context_fit.ts` — complete file
 
@@ -470,12 +518,23 @@ main();
 
 `_fallback_trim(messages, max_tokens)`:
 1. `kept = []`, `used = 0`.
-2. Iterate `messages` in reverse. For each `m`: `cost = max(1, len(m.get("content") or "") // 4)`.
-   If `kept` is empty, always keep it. Otherwise keep it only while `used + cost <= max_tokens`;
-   the first message that does not fit ends the loop.
+2. Iterate `messages` in reverse. For each `m`:
+   1. `cost = max(1, len(m.get("content") or "") // 4)`.
+   2. If `kept` is empty, keep it unconditionally - the newest message is never dropped.
+   3. Otherwise keep it if `used + cost <= max_tokens`; if not, **break**. The first message that
+      does not fit ends the loop.
+   4. On a keep: append to `kept` and `used += cost`.
 3. `kept.reverse()`.
 4. Return `{"messages": kept, "dropped": len(messages) - len(kept), "tokens": used,
    "degraded": True}`.
+
+**The comparison is `<=`, not `<`,** because `max_tokens` is a budget and an exact fit is inside it.
+Worked arithmetic for the WU-MODEL-04 probe, so its expected output is checkable by reading rather
+than by running: 14 messages of `"word " * 80` are 400 characters each, so
+`cost = max(1, 400 // 4) = 100`, against a budget of 900. Message 1 is kept unconditionally
+(`used = 100`). Messages 2 to 9 each satisfy `used + 100 <= 900`, taking `used` to 200, 300, ...,
+900. At message 10 the test is `900 + 100 = 1000 > 900`, so the loop breaks. Result: **9 kept,
+5 dropped, 900 tokens** - exactly the budget, nothing over it.
 
 ## §6 Failure modes
 
@@ -565,6 +624,10 @@ Agent global.anthropic.claude-sonnet-4-6
 2. Create the directory `fixtures/golden/` with an empty `.gitkeep` file so the committed cache
    directory exists before DP-DEPLOY records into it.
 3. Never let an exception escape `run_agent`.
+4. This work unit's verification writes a probe entry into `fixtures/golden/`. **Delete it
+   afterwards** — `rm -f fixtures/golden/golden-index.json fixtures/golden/*.json` — so the
+   committed cache holds only the eight real recordings DP-DEPLOY WU-03 makes. Leaving the probe
+   behind makes DP-DEPLOY WU-03 report nine entries instead of eight and fails it.
 
 **Files created/modified.** `src/stayquiet/model.py`, `fixtures/golden/.gitkeep`.
 
@@ -622,8 +685,13 @@ print('fallback kept', len(f['messages']), 'dropped', f['dropped'], f['degraded'
 **Expected output.**
 ```
 kept 8 dropped 6 within True degraded False
-fallback kept 8 dropped 6 True
+fallback kept 9 dropped 5 True
 ```
+
+The two lines differ by one message on purpose, and both are correct. The real buffer (line 1) adds
+per-message overhead to each entry, so nine of these messages exceed its 900-token input budget and
+it keeps eight. The degraded trim (line 2) counts content characters only, so nine fit exactly - the
+arithmetic is worked out in §5.9. Each stays inside its own budget; neither number is a bug.
 **What it proves.** A 14-message thread is fitted to the 900-token budget by the real context
 buffer through the Node bridge (a genuine provider→consumer call across the language boundary),
 and the degraded trim keeps the same newest-first behaviour when Node is absent.

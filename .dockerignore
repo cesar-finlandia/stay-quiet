@@ -1,0 +1,17 @@
+.git
+.gitignore
+node_modules
+dist
+.cache
+.venv
+__pycache__
+**/__pycache__
+*.pyc
+.env
+.env.*
+design_documents
+docs
+examples
+tests
+run_sweep.sh
+fixtures/audit

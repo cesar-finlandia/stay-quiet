@@ -616,13 +616,21 @@ print(booking_lookup('BK-9999')['error'], clause_lookup('nope.nope')['error'])
 ```
 **Expected output.**
 ```
-Sofia Marino Lakeside Cabin 2 kept 8 dropped 6
+Sofia Marino Lakeside Cabin 2 kept 14 dropped 0
 modified True Instalment plans are arranged by
 unknown booking_id unknown clause_id
 ```
 **What it proves.** `booking_lookup` fits the 14-message thread through the real context buffer
 (DP-TOOLS → DP-MODEL → context module), `clause_lookup` returns the current text with its change
 metadata, and both fail as data rather than as exceptions.
+
+> Amendment 2026-09-10: the expected line used to read `kept 8 dropped 6`, copied from the
+> DP-MODEL WU-04 synthetic probe (14 messages of 400 chars each). BK-1047's real thread is
+> 2,151 characters, which the buffer counts as 613 tokens — inside the 900-token
+> `thread_token_budget` — so keeping all 14 with `dropped 0` is the correct behaviour, not a
+> failure to trim. Dropping messages that fit the budget would destroy grounding context
+> (the checkout list, the CO-alarm question, the possible date change) for no reason; the
+> trim path itself is already proven by DP-MODEL WU-04.
 
 > If the context bridge is unavailable on this machine, `kept`/`dropped` differ and
 > `b['thread_degraded']` is `True`. That is an acceptable pass — the numbers above assume
@@ -661,8 +669,13 @@ print(a['action'], audit_read()[0]['booking_id'])
 ```
 ['run_dishwasher', 'take_out_refuse', 'return_furniture']
 ['strip_bed_linen', 'launder_textiles']
-1 Guest left the bed made
+1 Guest left the bed mad
 ```
+
+Amendment 2026-09-10: the expected line used to read `1 Guest left the bed made`
+(23 characters), but the command slices `cleaner_note[:22]` — 22 characters, ending
+mid-word at `…bed mad`. The implementation is verbatim per §5.6; the expectation had
+one character too many. Fixed here rather than in the command.
 followed by
 ```
 draft_prepared BK-1043

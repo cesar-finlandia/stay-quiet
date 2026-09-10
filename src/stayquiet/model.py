@@ -238,11 +238,13 @@ def _metered_wrapper() -> Any:
 def _normalize_cache_key(cache_key: str) -> str:
     """Map a human-readable cache key to the 64-char hex the golden cache needs.
 
-    The pre-existing GoldenCache only accepts 64-char lowercase hex keys
-    (anything else is a miss on read and refused on write). A key that is
-    already valid hex passes through; any other string is hashed with sha256 —
-    exactly what the cache's own explicit-key derivation does — so callers keep
-    using readable keys. Never raises; falls back to hashing the repr.
+    The pre-existing GoldenCache accepts ONLY 64-char lowercase hex keys: its
+    `_resolve_key_location` warns and returns None for anything else, so `put`
+    silently refuses and `get` always misses. A key that is already valid hex
+    passes through; any other string is hashed with sha256 - the same derivation
+    the cache's own explicit-key mode documents (`derive_key_standalone`:
+    "Explicit-key mode hashes the caller kebab-case key once"). Callers therefore
+    keep using readable keys everywhere. Never raises.
     """
     try:
         if len(cache_key) == 64 and all(c in "0123456789abcdef" for c in cache_key):
@@ -379,7 +381,12 @@ def cost_snapshot() -> dict:
 def record_golden(cache_key: str, text: str) -> None:
     """Write one model reply into the committed golden cache under `cache_key`, in
     the exact shape run_agent()'s cache path expects. Used by the recording script
-    so the offline demo path has real content. Never raises."""
+    so the offline demo path has real content. Never raises.
+
+    `cache_key` is the readable name; it is normalized for the filename and also
+    stored verbatim in the entry's `explicit_key` metadata field, which is what
+    keeps the cache's `golden-index.json` manifest human-readable.
+    """
     try:
         normalized = _normalize_cache_key(cache_key)
         meta: dict[str, Any] = {"provider": PROVIDER_TAG,
@@ -403,9 +410,9 @@ def golden_keys() -> list[str]:
     """Sorted list of the cache keys currently present in the golden cache. Used by
     the recording script to report coverage. Never raises.
 
-    Keys are reported under the human-readable name passed to `record_golden`
-    (stored in the manifest's `explicit_key` field) when one exists, otherwise
-    under the hex key the cache files use.
+    Reports the readable name recorded in each manifest entry's `explicit_key`
+    field when one exists, and the hex filename otherwise - so a caller sees
+    `draft::BK-1044::2026-09-08`, not a sha256 digest.
     """
     try:
         names: set[str] = set()

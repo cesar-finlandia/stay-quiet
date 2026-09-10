@@ -1,21 +1,21 @@
 {
   "$id": "https://chassis/contracts/event-envelope.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$comment": "Requirement IDs: TRN-01, TRN-02, TRN-06 | Single source of truth for shared contract #1 (DP-B §3.1). Envelope strict, payload open. No domain noun may become a first-class field.",
+  "$comment": "Requirement IDs: TRN-01, TRN-02, TRN-06 | Single source of truth for shared contract #1 (DP-B §3.1). Envelope strict, payload open. No domain noun may become a first-class field. | v1.1.0 (2026-09-10, StayQuiet entry): step_id pattern widened from ^[a-z0-9]+(-[a-z0-9]+)*$ to also accept '_' as the word separator. MINOR, not breaking: every id valid under v1.0.0 is still valid, and the field carries no semantics (see its description). Rationale: this entry's step ids are also the Python tool names its agent loop calls, which must be snake_case identifiers; keeping one vocabulary avoids a name-translation layer between a tool, its progress envelope and its UI label. Codegen unaffected — neither event-envelope.ts nor event_envelope.py reflects the pattern.",
   "title": "EventEnvelope",
   "description": "Generic live-process event — TRN-01/TRN-02/TRN-06. No domain noun is a first-class field; payload is arbitrary.",
-  "version": "1.0.0",
-  "x-version": "1.0.0",
+  "version": "1.1.0",
+  "x-version": "1.1.0",
   "type": "object",
   "additionalProperties": false,
   "required": ["step_id", "status", "payload", "timestamp", "sequence"],
   "properties": {
     "step_id": {
       "type": "string",
-      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "pattern": "^[a-z0-9]+([-_][a-z0-9]+)*$",
       "minLength": 1,
       "maxLength": 64,
-      "description": "Opaque kebab-case step identifier. No semantics enforced. Examples: retrieval-pass, widget-overview, synthesis."
+      "description": "Opaque lower-case step identifier, words separated by '-' or '_'. No semantics enforced. Examples: retrieval-pass, widget-overview, synthesis, policy_diff, draft_reply."
     },
     "status": {
       "type": "string",

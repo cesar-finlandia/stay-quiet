@@ -487,6 +487,20 @@ explicitly.
 32. return the CycleResult with every field of §3.1 filled from the locals above.
 ```
 
+**Amendment 2026-09-10 — badge fields on the two degraded `done` envelopes.** The
+`draft_reply`/`done` and `turnover_checklist`/`done` payloads above carry no `reason` or
+`fallback_source`. The pre-existing UI banner renders exactly those two fields and
+normalizes a missing `fallback_source` to `"none"` with a blank reason — so every
+degraded draft in the offline demo (the path the video is shot on) showed a bare
+"none" badge. The implementation now adds, **only when that turn degraded** (live
+turns are byte-identical to the payloads above):
+`reason = "served_from_golden_cache"` + `fallback_source = "cache"` when the turn came
+from the golden cache, else `reason = "model_unavailable"` + `fallback_source = "none"`.
+`reason` is host-legible by design: it names what the host gets (cache text, or a
+holding text because no model reply exists in this run), never a resilience-internal
+token like `forced_degraded`. All previously specified keys are unchanged, so no
+downstream assertion moves.
+
 **Outermost guard (mandatory).** The whole body of steps 6–32 is inside
 `try / except Exception as err`. The `except` branch:
 1. `emit("cycle", "error", {"error": str(err)[:400]}, trace_id=trace_id, degraded=True)`
@@ -661,7 +675,7 @@ print('stubs', sorted(p.name for p in pathlib.Path('engine/prompts').glob('*todo
 ```
 **Expected output.**
 ```
-system.stayquiet.md True 331
+system.stayquiet.md True 400
 user.draft.md True 137
 user.checklist.md True 109
 schemas CycleResult
@@ -673,6 +687,10 @@ stubs []
 > The word counts are indicative: if your files match §5.1–§5.3 byte for byte, they will be
 > within a few words of these numbers. A difference of more than ten words means text was
 > paraphrased — re-copy the section.
+>
+> Amendment 2026-09-10: the system-prompt count used to read 331, but §5.1 as written is
+> 400 words — verified byte-identical between the plan block and the file. The 331 was
+> stale (an earlier shorter draft); the file is correct, the number is fixed here.
 
 ---
 

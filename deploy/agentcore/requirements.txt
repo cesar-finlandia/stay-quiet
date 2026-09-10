@@ -1,0 +1,5 @@
+strands-agents>=1.0,<2.0
+bedrock-agentcore
+boto3>=1.35
+jsonschema>=4.21
+typing_extensions>=4.13

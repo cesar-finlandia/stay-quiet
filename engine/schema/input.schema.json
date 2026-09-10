@@ -1,5 +1,25 @@
 {
-  "$comment": "TODO(ENGINE): define Engine input shape per hackathon domain \u2014 see docs/engine-guide.md",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stayquiet/engine/schema/input.schema.json",
+  "title": "CycleParams",
+  "description": "Everything a caller may vary about one StayQuiet background cycle. Every field is optional; the defaults come from config/stayquiet.json.",
   "type": "object",
-  "properties": {}
+  "additionalProperties": false,
+  "properties": {
+    "trace_id": {
+      "type": "string",
+      "description": "Reuse an existing trace id instead of minting one, so a caller can correlate the envelope stream it already opened."
+    },
+    "max_bookings": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 50,
+      "description": "Cap on bookings processed this cycle. Overrides max_bookings in config/stayquiet.json."
+    },
+    "booking_filter": {
+      "type": "string",
+      "pattern": "^BK-[0-9]{4}$",
+      "description": "Process only this booking. Used by the golden-cache recorder."
+    }
+  }
 }

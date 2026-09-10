@@ -128,6 +128,13 @@ rules ask for.
 Replace `<PUBLIC_URL>`, `<REPO_URL>` and `<YOUTUBE_URL>` with the real values before the repository
 is made public; if the live URL does not exist, delete that bullet rather than leaving a placeholder.
 
+Amendment 2026-09-10: with no App Runner deployment (DP-DEPLOY WU-04 blocked, no AWS
+credentials on the build machine) there is no `<PUBLIC_URL>`, and the video is not
+uploaded yet so there is no `<YOUTUBE_URL>` either — both bullets are deleted, not
+left as placeholders, and the operator re-adds them at publish time alongside the
+real links. (The template has no repo-URL bullet; the origin is
+`https://github.com/cesar-finlandia/stay-quiet` for the operator's release step.)
+
 ````markdown
 # StayQuiet
 
@@ -388,10 +395,22 @@ section.
 
 ```json
 [
-  { "tool": "Claude", "scope": "authored the design plans this project was built from, and reviewed and tested the result" },
-  { "tool": "cheaper coding models", "scope": "implemented the application code from those design plans" }
+  {
+    "tool": "Claude Opus 5 (Anthropic)",
+    "scope": "authored the design plans this project was built from, and reviewed and amended them to resolve implementation conflicts"
+  },
+  {
+    "tool": "Muse Spark (Meta, via OpenCode)",
+    "scope": "implemented the application code from those design plans and verified each work unit"
+  }
 ]
 ```
+
+Amendment 2026-09-10: this log used to name "Claude" and "cheaper coding models". The
+rules ask for an honest AI-assistance record, so it now names the actual tools: Opus 5
+authored the plans (keeping the word "Claude", which the disclosure generator looks
+for), and Muse Spark did the implementation. No capability claim changes — only the
+names are accurate.
 
 ### §5.4 Appending to `disclosure.md`
 
@@ -518,8 +537,14 @@ README.md:0,engine/README.md:0
 section the rules require, and mentions no shared scaffolding anywhere — the README policy holds
 mechanically.
 
-> The first count is "at least 2" and the second "at least 1"; higher numbers pass. The third line
+> The first count is "at least 1" and the second "at least 1"; higher numbers pass. The third line
 > must be exactly two zeros.
+>
+> Amendment 2026-09-10: the first threshold used to read "at least 2", but the literal
+> §5.1 contains exactly one plural "Strands Agents" (the intro line, i.e. the prominent
+> position the organizers' pro-tip asks for) plus three singular "Strands agent loop"
+> mentions — four SDK namings total. The file is verbatim per the section contract, so
+> the threshold is corrected, not the text.
 
 ---
 
@@ -552,11 +577,16 @@ print('guide-gone', not pathlib.Path('docs/engine-guide.md').exists())
 **Expected output.**
 ```
 labels all-present
-embedded True nodes 18
+embedded True nodes 19
 guide-gone True
 ```
 **What it proves.** The diagram contains every label the rules ask for — interface, the Strands
 loop, the tools, the AWS services, the outputs — and the Markdown page embeds the same source.
+
+Amendment 2026-09-10: the node count used to read 18, but the literal §5.2 defines 19
+node lines (host, SPA, API, scheduler, loop, gate, five tools, data, Bedrock, cache,
+cost, outputs, ECR, App Runner, AgentCore) — verified byte-identical between the plan
+block and the file. Count corrected, diagram untouched.
 
 ---
 
@@ -569,6 +599,10 @@ loop, the tools, the AWS services, the outputs — and the Markdown page embeds 
 2. Run the disclosure generator command from §4.
 3. Append the two sections of §5.4 to the end of `disclosure.md`. **Change nothing above them.**
 4. Confirm the file names no repository, no module id and no directory listing of shared code.
+5. Delete the generator's side-effect files `architecture-summary.md` and
+   `architecture_summary.txt` from the repository root if they appear (amendment
+   2026-09-10 — the generator writes them next to `disclosure.md` unasked, and WU-06
+   requires the root to hold exactly three Markdown files).
 
 **Files created.** `ai_tools.json`, `disclosure.md`.
 
@@ -611,6 +645,17 @@ nothing else.
 3. Run the hygiene command from §4. Read `hygiene-report.md`. If the secret scan is flagged, remove
    the flagged content and re-run; do not suppress it.
 4. Confirm `git status` shows no `.env`, no `fixtures/audit/`, and no `node_modules/`.
+
+*Amendment 2026-09-10 — two `.gitignore` lines and scan triage.* Step 4 assumes
+`node_modules/` is ignored, but the assembled `.gitignore` never listed it — so the
+leaks gate failed on the untracked directory itself. `node_modules/` (regenerable
+toolchain; its vendored example keys also caused two of the three secret-scan hits)
+and `dist/` (rebuilt by `npm run build:ui` and Dockerfile stage 1) are now ignored,
+with the reason recorded in the file. The secret scan's three hits were triaged by
+hand as false positives (empty `.env.example`, vendored prettier fixtures) and the
+triage is appended to `hygiene-report.md`; nothing was deleted to silence the
+scanner, because deleting `.env.example` would break DP-FOUND and deleting
+`node_modules` would break every build.
 
 **Files created/deleted.** `hygiene-report.md` created; `run_sweep.sh`, `models.json`,
 `engine/rag/`, `engine/voice/` deleted.
@@ -715,6 +760,13 @@ exactly the three Markdown documents the rules ask for — no deck, no script, n
 
 > `qa` may show `qa-sheet.fallback.md` instead; either passes. `repo-clean` must contain no other
 > `.md` file at the root.
+>
+> Amendment 2026-09-10: the deck tool cannot run in this assembly even with `--no-llm` —
+> after ephemeral `ajv`/`ajv-formats` installs it fails on the unassembled
+> `contracts/ui-screen-catalog.json` and writes nothing (the installs used `--no-save`,
+> so `package.json` is untouched). `deck/deck.md` is therefore a hand-written skeleton
+> with the same slots and TODO markers the tool's `--no-llm` output would carry, using
+> only established product facts. The fallback Q&A sheet is accepted as written.
 
 ---
 

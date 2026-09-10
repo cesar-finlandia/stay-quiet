@@ -1,5 +1,57 @@
 {
-  "$comment": "TODO(ENGINE): define Engine output shape (validated via RES-04 once defined) \u2014 see docs/engine-guide.md",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stayquiet/engine/schema/output.schema.json",
+  "title": "CycleResult",
+  "description": "The complete outcome of one StayQuiet background cycle. Returned even when every model turn degraded.",
   "type": "object",
-  "properties": {}
+  "required": [
+    "trace_id", "run_id", "previous_captured_at", "latest_captured_at",
+    "changed_clauses", "money_clauses", "bookings_scanned", "bookings_affected",
+    "drafts", "checklists", "decisions", "quiet_actions", "tool_calls",
+    "degraded", "elapsed_ms", "tokens", "cost", "summary"
+  ],
+  "properties": {
+    "trace_id": { "type": "string" },
+    "run_id": { "type": "string", "pattern": "^RUN-[0-9a-f]{8}$" },
+    "previous_captured_at": { "type": "string", "description": "Capture date of the older policy snapshot." },
+    "latest_captured_at": { "type": "string", "description": "Capture date of the newer policy snapshot." },
+    "changed_clauses": { "type": "array", "items": { "type": "string" } },
+    "money_clauses": { "type": "array", "items": { "type": "string" }, "description": "Subset of changed_clauses classified as money-related." },
+    "bookings_scanned": { "type": "integer", "minimum": 0 },
+    "bookings_affected": { "type": "integer", "minimum": 0 },
+    "drafts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["booking_id", "text", "degraded", "source"],
+        "properties": {
+          "booking_id": { "type": "string" },
+          "text": { "type": "string" },
+          "degraded": { "type": "boolean" },
+          "source": { "type": "string", "enum": ["live", "cache", "none"] }
+        }
+      }
+    },
+    "checklists": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["booking_id", "items", "degraded", "source"],
+        "properties": {
+          "booking_id": { "type": "string" },
+          "items": { "type": "array", "items": { "type": "string" } },
+          "degraded": { "type": "boolean" },
+          "source": { "type": "string", "enum": ["live", "cache", "none"] }
+        }
+      }
+    },
+    "decisions": { "type": "array", "items": { "type": "object" }, "description": "Decision records raised this cycle; shape owned by src/stayquiet/store.py." },
+    "quiet_actions": { "type": "integer", "minimum": 0, "description": "Bookings resolved without asking the host." },
+    "tool_calls": { "type": "array", "items": { "type": "string" }, "description": "Tools the Strands loop chose, in call order." },
+    "degraded": { "type": "boolean" },
+    "elapsed_ms": { "type": "integer", "minimum": 0 },
+    "tokens": { "type": "integer", "minimum": 0 },
+    "cost": { "type": "object", "description": "cost_snapshot(); estimated_cost_usd is a MODELLED figure, never a bill." },
+    "summary": { "type": "string" }
+  }
 }

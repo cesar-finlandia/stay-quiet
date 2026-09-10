@@ -510,11 +510,19 @@ npm run build:bridge > /dev/null 2>&1 && echo '{"messages":[{"role":"user","cont
 ```
 **Expected output.**
 ```
-{"messages":[{"role":"user","content":"word word word"}],"dropped":0,"tokens":3}
+{"messages":[{"role":"user","content":"word word word"}],"dropped":0,"tokens":9}
 ```
 **What it proves.** The pre-existing context buffer runs from a single bundled file under a bare
-`node`, which is exactly what the container provides. (`tokens` may differ by one or two depending
-on the heuristic; `dropped` must be `0` and the message must come back unchanged.)
+`node`, which is exactly what the container provides. (`dropped` must be `0` and the message
+must come back unchanged; those are the binding assertions.)
+
+Amendment 2026-09-10: the expected `tokens` used to read `3` with a note allowing a
+difference of "one or two". The bedrock profile's counter is `ceil(chars/4) + 5` framing
+tokens per message (`src/context/token_counter.ts`, DP-E §4.5 calibration): 14 chars →
+`ceil(14/4) = 4`, plus 5 framing = **9**. The old `3` was bare chars/4 without the
+documented framing, so no implementation could ever print it through this bridge. The
+framing is identical in the dev (`vite-node`) and bundled paths — it is the same code —
+so budgets behave the same in both.
 
 ---
 
@@ -532,8 +540,15 @@ on the heuristic; `dropped` must be `0` and the message must come back unchanged
 
 **Verification command.**
 ```bash
-sleep 6 && bash scripts/smoke.sh http://127.0.0.1:8080 && docker run --rm --entrypoint sh stayquiet:local -c "node --version && ls dist/bridge && test ! -f .env && echo no-secrets"
+for i in $(seq 1 24); do curl -fsS http://127.0.0.1:8080/healthz >/dev/null 2>&1 && break || sleep 5; done && bash scripts/smoke.sh http://127.0.0.1:8080 && docker run --rm --entrypoint sh stayquiet:local -c "node --version && ls dist/bridge && test ! -f .env && echo no-secrets"
 ```
+
+Amendment 2026-09-10: the command used to start with a fixed `sleep 6`. A cold
+container needs ~2 s for interpreter imports, 2 s for the scheduler's first tick and
+~2.3 s for the cycle itself before `/api/state` is non-empty — measured 7 s minimum,
+so 6 s fails on any unhurried machine. The bounded readiness poll (24 × 5 s) waits
+for the same healthy state instead of guessing a duration; everything it asserts is
+unchanged.
 **Expected output.**
 ```
 SMOKE OK: http://127.0.0.1:8080
@@ -693,16 +708,29 @@ day. Rung 4 of the ladder.
      --data-source cache \
      --out ../../hackathons/hackathon-projects/2026-09-agents_for_humans/capture
    ```
-3. Create `fixtures/demodrive/click-script.json` first, validated against
-   `contracts/demodrive-script.schema.json`, with these steps in order: load `/`, wait for the
-   progress list, screenshot; wait for the decision cards, screenshot; click `Approve and file` on
-   the first card, screenshot; scroll to the audit trail, screenshot.
-4. If Playwright cannot be installed, take four manual screenshots and a screen recording of the
-   same four beats into the same folder, and record in the run report that the capture was manual.
-   The artifact matters; the tool does not.
+3. Create `fixtures/demodrive/click-script.json` first, with these steps in order: load `/`,
+   wait for the progress list, screenshot; wait for the decision cards, screenshot; click
+   `Approve and file` on the first card, screenshot; scroll to the audit trail, screenshot.
+   Shape it to the `DemodriveScript` types in `src/ideation/demodrive/script.ts`.
+4. If the demodrive driver cannot run in this assembly (it imports the unassembled
+   `src/dev/mock/runner.js`, and `contracts/demodrive-script.schema.json` was not
+   assembled, so even script loading fails), capture the same four beats with plain
+   Playwright instead — `capture.mjs` next to the PNGs shows how — or take four manual
+   screenshots and a screen recording of the same four beats into the same folder, and
+   record in the run report which path was used. The artifact matters; the tool does not.
 
 **Files created.** `fixtures/demodrive/click-script.json`, plus capture artifacts **outside** the
 entry repository.
+
+**Amendment 2026-09-10:** the demodrive path of step 2 was attempted and fails before any
+browser opens: `npm run demodrive -- --help` dies in `feeder.ts` on the missing
+`../../dev/mock/runner.js` (the same pre-existing gap the repo's own `tsc` reports), and
+one level deeper `loadDemodriveScript` would `readFileSync` the absent
+`contracts/demodrive-script.schema.json`. Both files are chassis-owned and out of scope,
+so the capture was done with a 40-line Playwright script performing the identical four
+beats (progress → decisions → approve → audit) against the served app. The four PNGs and
+the script live in the timestamped capture folder; `click-script.json` remains the
+documented capture plan for an assembly where the driver works.
 
 **Verification command.**
 ```bash
@@ -725,7 +753,7 @@ contains only the application.
 # WU-DEPLOY-01
 npm run build:bridge > /dev/null 2>&1 && echo '{"messages":[{"role":"user","content":"word word word"}],"maxTokens":900}' | node dist/bridge/context_fit.mjs
 # WU-DEPLOY-02  (container running in another terminal)
-sleep 6 && bash scripts/smoke.sh http://127.0.0.1:8080 && docker run --rm --entrypoint sh stayquiet:local -c "node --version && ls dist/bridge && test ! -f .env && echo no-secrets"
+for i in $(seq 1 24); do curl -fsS http://127.0.0.1:8080/healthz >/dev/null 2>&1 && break || sleep 5; done && bash scripts/smoke.sh http://127.0.0.1:8080 && docker run --rm --entrypoint sh stayquiet:local -c "node --version && ls dist/bridge && test ! -f .env && echo no-secrets"
 # WU-DEPLOY-03
 python scripts/record_golden.py --check | head -3 && STAYQUIET_DEMO_MODE=1 python -c "
 import time

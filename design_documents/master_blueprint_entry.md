@@ -185,7 +185,7 @@ re-running problem grounding or event-profile extraction (`pgm`, `profile` exclu
 ```
                         ┌────────────────────────── browser (SPA) ──────────────────────────┐
                         │  src/stayquiet/web/*.tsx                                          │
-                        │  useEventStream()  ──►  StepStatusIndicator / StreamingTextRenderer│
+                        │  subscribeEnvelopes() ─► StepStatusIndicator / StreamingTextRenderer│
                         │  QuietMonitor · DecisionPing(approve|edit) · AuditTrail            │
                         └───────▲──────────────────────────────┬────────────────────────────┘
                     SSE GET /events/stream          POST /api/runs · POST /api/decisions/{id}
@@ -236,7 +236,10 @@ Every step of `run_cycle()` calls `src/stayquiet/publish.py:emit()`, which valid
 
 ### §2.3 EventEnvelope wiring
 
-The envelope shape is frozen by `contracts/event-envelope.schema.json` and mirrored in
+The envelope shape is defined by `contracts/event-envelope.schema.json` (**v1.1.0** — its v1.0.0
+`step_id` pattern accepted kebab-case only and rejected this vocabulary; the pattern was widened to
+`^[a-z0-9]+([-_][a-z0-9]+)*$`, a backward-compatible MINOR change justified in the file's own
+`$comment`) and mirrored in
 `src/platform/transport/event_envelope.py` (Python) and
 `src/platform/transport/event-envelope.ts` (TypeScript). **No plan may redefine it.**
 
@@ -264,9 +267,12 @@ The fixed `step_id` vocabulary — the ONLY values any plan may emit, consume, o
 | `decision_resolved` | DP-API | host approved or edited a ping |
 
 `GET /events/stream` (SSE, `text/event-stream`) is the primary transport; `GET /events` returns a
-`FallbackSnapshot` (`{status:"complete", trace_id, events:[…], degraded}`) that
-`useEventStream()` fetches automatically after one failed retry (TRN-RES-03). The frontend never
-implements a second error mode.
+`FallbackSnapshot` (`{status:"complete", trace_id, events:[…], degraded}`). The frontend subscribes
+with its own `subscribeEnvelopes()` (DP-UI §5.4a) rather than the pre-existing `useEventStream`,
+which cannot run in a browser — its module graph statically imports `node:fs`, `node:crypto` and
+`node:http`, and its per-envelope validation needs `ajv` through `node:module`. The non-streaming
+fallback is DP-UI's three-second `/api/state` poll, which carries the same `events` array, so there
+is still exactly one error mode and one envelope shape on the frontend.
 
 ### §2.4 Inter-module contract table — single owner, N consumers
 
@@ -323,8 +329,8 @@ changed, not extended silently.
 | C4 | `from src.cost import BudgetWarning, CostBudgetConfig, CostMeteringOpts` | cost module | DP-MODEL |
 | C5 | `from src.platform.transport.event_envelope import EventEnvelope` | platform/transport | DP-STREAM |
 | C6 | *(none)* — `src/platform/transport/stream_router.py` is marked ILLUSTRATIVE WIRING in its own header and is **not** imported by this entry. DP-API writes the SSE route itself over `since()` (row 22), so there is no async-from-sync hazard. | — | — |
-| C7 | `import type { EventEnvelope } from "src/platform/transport";` | platform/transport | DP-UI |
-| C8 | `import { useEventStream } from "src/platform/transport";` | platform/transport | DP-UI |
+| C7 | `import type { EventEnvelope } from "src/platform/transport/event-envelope.js";` — **type only, and from the generated module, never the barrel** | platform/transport | DP-UI |
+| C8 | *(none)* — `useEventStream` / `createSubscriber` are unusable in a browser (Node builtins in their graph, `ajv` in their validation). DP-UI owns a ~25-line `EventSource` subscription instead; see DP-UI §0 and §5.4a. | — | — |
 | C9 | `import { StepStatusIndicator, StreamingTextRenderer, CitationDisplay, isDegradedEnvelope, resolveTheme, currentTheme } from "src/platform/ui";` | platform/ui | DP-UI |
 | C10 | `import { fit, count, countBuffer } from "src/context/index.js";` | context module | DP-MODEL (`engine/bridge/context_fit.ts` only) |
 | C11 | `import { generateRecords, generateDocuments } from "src/data/index.js";` | data module | DP-DATA (`scripts/generate_fixtures.mjs` only) |
@@ -379,7 +385,7 @@ contract. `DP-SCRIPT` is last (see §3b).
 | 5 | **DP-TOOLS** | The six deterministic Strands tools | `engine/tools/ctx.py`, `engine/tools/policy.py`, `engine/tools/bookings.py`, `engine/tools/clauses.py`, `engine/tools/checklists.py`, `engine/tools/auditing.py`, `engine/tools/__init__.py` (final) | 27–29 | DP-AGENT | DP-DATA, DP-MODEL, DP-STREAM | SQ-F-02, SQ-F-08, SQ-F-11 + supplies the grounding SQ-F-04/SQ-F-05 depend on |
 | 6 | **DP-AGENT** | The Strands agent loop, triage gate, cycle orchestration | `engine/agents/stayquiet_agent.py`, `engine/agents/__init__.py`, `engine/prompts/system.stayquiet.md`, `engine/prompts/user.draft.md`, `engine/prompts/user.checklist.md`, `engine/schema/input.schema.json`, `engine/schema/output.schema.json`, `engine/agents/index.ts` deletion, `engine/agents/todo.agent.md` deletion | 30, 31 | DP-API, DP-DEPLOY, DP-SCRIPT | DP-TOOLS | SQ-F-03, SQ-F-04, SQ-F-05, SQ-F-06, SQ-F-09, SQ-N-02, SQ-N-04 |
 | 7 | **DP-API** | FastAPI service: SSE, REST, SPA hosting, background scheduler | `src/stayquiet/api.py`, `src/stayquiet/__main__.py` | 32 | DP-UI, DP-DEPLOY | DP-AGENT, DP-STREAM | SQ-F-07, SQ-F-09, SQ-F-10, SQ-F-13 |
-| 8 | **DP-UI** | The host-facing SPA: quiet monitor → decision ping → audit trail | `index.html` (rewrite), `src/stayquiet/web/main.tsx`, `App.tsx`, `QuietMonitor.tsx`, `DecisionPing.tsx`, `AuditTrail.tsx`, `api.ts`, `labels.ts`, `stayquiet.css`, `vite.config.ts` (proxy) | 33 | — | DP-API | SQ-F-07, SQ-F-09, SQ-F-10, SQ-N-03, SQ-N-05 |
+| 8 | **DP-UI** | The host-facing SPA: quiet monitor → decision ping → audit trail | `index.html` (rewrite), `src/stayquiet/web/main.tsx`, `App.tsx`, `QuietMonitor.tsx`, `DecisionPing.tsx`, `AuditTrail.tsx`, `api.ts` (incl. its own `subscribeEnvelopes()`), `labels.ts`, `stayquiet.css`, `vite.config.ts` (proxy) | 33 | — | DP-API | SQ-F-07, SQ-F-09, SQ-F-10, SQ-N-03, SQ-N-05 |
 | 9 | **DP-DEPLOY** | Container, AWS App Runner public URL, golden-cache recording, offline capture, optional AgentCore | `Dockerfile`, `.dockerignore`, `scripts/record_golden.py`, `scripts/deploy-apprunner.sh`, `scripts/smoke.sh`, `deploy/agentcore/{main.py,requirements.txt,README.md}`, `fixtures/demodrive/click-script.json`, `fixtures/golden/*.json`, plus one added `package.json` script (`build:bridge`) | — | DP-SUBMIT, DP-SCRIPT | DP-API, DP-UI | SQ-F-13, SQ-N-01, SQ-N-02, SQ-N-06 |
 | 10 | **DP-SUBMIT** | README, architecture diagram, disclosure, submission copy, deck + Q&A (outside the repo) | `README.md`, `engine/README.md`, `docs/architecture.md`, `docs/architecture.mmd`, `docs/architecture.png`, `ai_tools.json`, `disclosure.md`, `hygiene-report.md`; deletes `run_sweep.sh`, `models.json`, `engine/rag/`, `engine/voice/`, `docs/engine-guide.md`; writes `submission.md`, `deck/`, `qa/`, `builder-post.md` **outside** the repo | — | DP-SCRIPT | DP-DEPLOY | SQ-F-14, SQ-N-03, SQ-N-07 |
 | 11 | **DP-SCRIPT** | The demo-video script — measured, outside the repo | `../../hackathons/hackathon-projects/2026-09-agents_for_humans/demo-video-script.md` only | — | operator | DP-SUBMIT (i.e. everything) | SQ-N-02, SQ-N-07 + §0.3 axis coverage |
@@ -469,7 +475,7 @@ Appended sections follow the same rule — describe capabilities, state what is 
 | R2 | Bedrock model access not enabled / credentials missing / throttled | high | demo blocked | `with_resilience` + golden cache (DP-MODEL); `STAYQUIET_DEMO_MODE=1` runs the whole product offline from `fixtures/golden/` (DP-MODEL WU-05) |
 | R3 | AWS App Runner deploy fails or costs escalate | med | loses optional live link only | DP-DEPLOY WU-04 is explicitly non-blocking; ladder rung 2 below; `$50` credit guard is the cost meter (DP-MODEL) |
 | R4 | Node↔Python context bridge unavailable in the container | med | small | `fit_thread()` degrades to a deterministic newest-first message trim and stamps `degraded:true` (DP-MODEL WU-04) |
-| R5 | SSE blocked by a proxy | low | demo looks frozen | `GET /events` fallback + `useEventStream` auto-fetch (already in the platform layer); `TRANSPORT=none` env forces it (DP-API WU-03) |
+| R5 | SSE blocked by a proxy | low | demo looks frozen | the frontend's three-second `/api/state` poll carries the same `events` array, so the run still fills in; `GET /events` serves the same snapshot for any other client (DP-API WU-03) |
 | R6 | Fixture generation needs `OPENAI_API_KEY` we do not want at build time | high | blocks DP-DATA | The three fixture files are authored **literally in DP-DATA §5**, committed, and are the source of truth; `scripts/generate_fixtures.mjs` is an optional regeneration path, never a build dependency |
 | R7 | Video overruns 5:00 and the close is cut | med | Presentation points | DP-SCRIPT budgets to ~4:40 of speech with counted words and a measured read-aloud check |
 | R8 | Script quotes numbers the build does not produce | med | credibility | DP-SCRIPT WU-01 harvests every fact from two real runs before a word is written |

@@ -1,0 +1,47 @@
+graph TD
+  H["Host (browser)<br/>quiet monitor · decision card · audit trail"]
+  SPA["React SPA<br/>src/stayquiet/web"]
+  API["FastAPI service<br/>src/stayquiet/api.py<br/>SSE /events/stream · REST /api/*"]
+  SCHED["Background scheduler<br/>one cycle every cycle_interval_s<br/>no prompt, no button"]
+  LOOP["Strands agent loop<br/>strands.Agent + strands.models.BedrockModel<br/>engine/agents/stayquiet_agent.py"]
+  GATE["Triage gate (deterministic Python)<br/>refund · exception · review risk · quiet"]
+  T1["policy_diff / policy_fetch"]
+  T2["booking_lookup<br/>+ context buffer trim"]
+  T3["clause_lookup"]
+  T4["checklist_baseline"]
+  T5["audit_log"]
+  DATA["Synthetic bookings + two dated policy captures<br/>fixtures/synthetic"]
+  BR["Amazon Bedrock<br/>inference for drafting and checklists"]
+  CACHE["Golden cache<br/>fixtures/golden — degraded fallback"]
+  COST["Cost guardrail<br/>token metering vs budget"]
+  OUT["Outputs<br/>guest reply draft · turnover checklist<br/>decision card · audit trail (JSONL)"]
+  ECR["Amazon ECR"]
+  AR["AWS App Runner<br/>public HTTPS URL"]
+  ACR["Amazon Bedrock AgentCore Runtime<br/>optional host for the same agent"]
+
+  H -->|approve / edit| API
+  API --> SPA
+  SPA -->|EventEnvelope stream| H
+  SCHED --> LOOP
+  API --> SCHED
+  LOOP --> T1
+  LOOP --> T2
+  LOOP --> T3
+  LOOP --> T4
+  LOOP --> T5
+  T1 --> DATA
+  T2 --> DATA
+  T3 --> DATA
+  T4 --> DATA
+  LOOP -->|every call wrapped by the resilience layer| BR
+  BR -.->|unavailable| CACHE
+  CACHE -.-> LOOP
+  LOOP --> COST
+  LOOP --> GATE
+  GATE --> OUT
+  T5 --> OUT
+  OUT --> API
+  API === ECR
+  ECR === AR
+  AR -->|serves| H
+  LOOP -.-> ACR

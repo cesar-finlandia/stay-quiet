@@ -9,9 +9,32 @@ Must already exist:
   `/api/runs`, `/events/stream`, `/events`; DP-API WU-02 passing.
 * **DP-AGENT**: the `draft_reply` `done` envelope carries `payload.text`; the `clause_lookup`
   `done` envelope carries `payload.citations`.
+* `contracts/event-envelope.schema.json` is at v1.1.0, so the underscore `step_id` vocabulary this
+  plan filters and labels is contract-valid (see DP-STREAM §0).
 
 Pre-existing and read-only: `src/platform/ui/` (three components, three themes, the token
-stylesheet), `src/platform/transport/` (`useEventStream`, the `EventEnvelope` type).
+stylesheet) and the generated type `src/platform/transport/event-envelope.ts`.
+
+**Do not use `useEventStream` / `createSubscriber`.** They cannot run in a browser, for two
+independent reasons, both verified against this repository:
+
+1. **They do not bundle.** `useEventStream` is exported from the `src/platform/transport` barrel,
+   which also re-exports `publisher.ts`, `subscriber.ts`, `fallback.ts` and `stream_router.ts`.
+   Those four statically import `node:fs` (twice), `node:crypto` and `node:http`. Bundling a browser
+   entry that imports `useEventStream` fails with four `Could not resolve "node:…"` errors. Aliasing
+   one of them, as an earlier draft of this plan did, only moves the failure to the next one.
+2. **Even bundled, they would drop every envelope.** `createSubscriber` validates each received
+   envelope with the resilience layer's `validate()`, which loads `ajv` through `node:module`'s
+   `createRequire`. Outside Node that resolver returns `null` and `validate()` raises
+   `ajv validation requires a Node runtime (RES-04)` — from inside the `EventSource` message
+   listener, which has no surrounding `try`. Every envelope would be lost, silently, in the one
+   frame the demo video is built around.
+
+So this plan owns its own short `EventSource` subscription (§3.4, §5.4a) and imports the envelope as
+a **type only**. That keeps the whole browser graph free of Node builtins — verified: an entry
+importing `src/platform/ui/*` plus `import type { EventEnvelope }` bundles in 13 ms with no external
+node module. The three pre-existing UI components are still used exactly as they are; it is only the
+transport *runtime* that a browser cannot load.
 
 **Working directory for every command in this plan is the entry repository root.**
 
@@ -40,7 +63,8 @@ that the data is synthetic), **SQ-N-05** (degraded states are visible, labelled 
 8. `src/stayquiet/web/api.ts`
 9. `src/stayquiet/web/labels.ts`
 10. `src/stayquiet/web/stayquiet.css`
-11. `src/stayquiet/web/shims/node-fs.ts`
+11. `src/stayquiet/web/css.d.ts` — `declare module "*.css"` (amendment 2026-09-10,
+    see §5.10a).
 
 ### OUT — owned elsewhere; never create or edit here
 
@@ -61,7 +85,10 @@ Hard prohibitions:
 * **No business logic.** The UI never diffs, never triages, never computes an exposure figure. It
   renders what `/api/state` returns.
 * **No re-implementation of the three pre-existing components** (`StepStatusIndicator`,
-  `StreamingTextRenderer`, `CitationDisplay`) and no second copy of `useEventStream`.
+  `StreamingTextRenderer`, `CitationDisplay`). They are used as they are, from their concrete paths.
+* **No runtime import from `src/platform/transport`, and no import of `src/index.ts`.** The envelope
+  type comes from `src/platform/transport/event-envelope.js` via `import type`, which erases at
+  compile time. Anything else from that directory pulls Node builtins into the bundle (§0).
 * **No new npm dependency.** React, React DOM and Vite are already in `package.json`.
 
 ## §3 Interfaces owned
@@ -101,7 +128,11 @@ export const KIND_LABELS: Record<string, string> = {
 // StayQuiet UI — the only place the browser talks to the backend.
 // Every function resolves, never throws: a failed fetch returns a safe empty shape
 // so the interface degrades to its empty states instead of a blank page.
-import type { EventEnvelope } from "src/platform/transport";
+import type { EventEnvelope } from "src/platform/transport/event-envelope.js";
+
+// Amendment 2026-09-10: this line used to name the transport barrel. §4 and §2
+// require the generated module path instead; a barrel import — even type-only —
+// contradicts the prohibition this plan mechanically checks in WU-UI-01.
 
 export type Decision = {
   decision_id: string;
@@ -198,7 +229,7 @@ export async function startRun(): Promise<boolean>;
 ```typescript
 // src/stayquiet/web/QuietMonitor.tsx
 export type QuietMonitorProps = {
-  envelopes: EventEnvelope[];   // from useEventStream, or state.events as fallback
+  envelopes: EventEnvelope[];   // from subscribeEnvelopes(), or state.events as fallback
   state: AppState;
   streamStatus: string;         // "connecting" | "open" | "closed" | "error"
   onRunNow: () => void;
@@ -220,19 +251,31 @@ export type AuditTrailProps = {
 export function AuditTrail(props: AuditTrailProps): JSX.Element;
 ```
 
-### 3.4 `src/stayquiet/web/shims/node-fs.ts` — complete file
+### 3.4 `subscribeEnvelopes()` and `isEnvelope()` — this plan's own SSE subscription
+
+Declared in `src/stayquiet/web/api.ts`, next to the fetch helpers.
 
 ```typescript
-// Browser shim for `node:fs`.
-// The pre-existing transport barrel statically imports readFileSync (it loads the
-// envelope JSON Schema when the non-streaming fallback parses a snapshot). That path
-// is never taken in this app — App.tsx passes fallback:"none" to useEventStream and
-// polls /api/state instead — but the static import must still resolve for the
-// browser bundle to build. This shim makes it resolve and makes a real call loud.
-export function readFileSync(): never {
-  throw new Error("readFileSync is not available in the browser (StayQuiet shim)");
-}
-export default { readFileSync };
+/**
+ * Subscribe to GET /events/stream and deliver each envelope to `onEnvelope`.
+ *
+ * This exists because the pre-existing useEventStream / createSubscriber cannot run
+ * in a browser (§0): their module graph statically imports node:fs, node:crypto and
+ * node:http, and their per-envelope validation needs ajv through node:module. This is
+ * the browser-native equivalent — EventSource, the same `event: envelope` frame name
+ * the backend emits, and a small structural guard in place of JSON Schema validation.
+ *
+ * Returns an unsubscribe function. Never throws.
+ */
+export function subscribeEnvelopes(handlers: {
+  onEnvelope: (env: EventEnvelope) => void;
+  onStatus: (status: StreamStatus) => void;
+}): () => void;
+
+export type StreamStatus = "connecting" | "open" | "closed" | "error";
+
+/** True when `value` carries the five required envelope fields with the right types. */
+export function isEnvelope(value: unknown): value is EventEnvelope;
 ```
 
 ## §4 Interfaces consumed
@@ -240,8 +283,7 @@ export default { readFileSync };
 Copy verbatim.
 
 ```typescript
-import type { EventEnvelope } from "src/platform/transport";                    // pre-existing platform/transport
-import { useEventStream } from "src/platform/transport";                        // pre-existing platform/transport
+import type { EventEnvelope } from "src/platform/transport/event-envelope.js";  // pre-existing generated TYPE ONLY — never a runtime import
 import { StepStatusIndicator } from "src/platform/ui/StepStatusIndicator.js";   // pre-existing platform/ui
 import { StreamingTextRenderer } from "src/platform/ui/StreamingTextRenderer.js"; // pre-existing platform/ui
 import { CitationDisplay } from "src/platform/ui/CitationDisplay.js";           // pre-existing platform/ui
@@ -254,6 +296,12 @@ import "src/platform/ui/themes/operator.css";                                   
 The three components take `envelopes: EventEnvelope[]` and optional copy props; `StepStatusIndicator`
 also takes `labelMap`. Their exact prop types are in `src/platform/ui/*.tsx` — read them, do not
 guess, and do not add props they do not have.
+
+Note the envelope import path: `src/platform/transport/event-envelope.js`, the generated type
+module, **not** the `src/platform/transport` barrel, and always with `import type` so it erases at
+compile time. The three UI components import the type the same way, which is why they bundle for the
+browser while the barrel does not (§0). There is no runtime import from that directory anywhere in
+this plan.
 
 Backend contract (owned by DP-API): `GET /api/state` returns the `AppState` shape of §3.2;
 `POST /api/decisions/{id}` takes `{"action","text"}` and returns `{"decision": Decision}`;
@@ -284,8 +332,10 @@ Backend contract (owned by DP-API): `GET /api/state` returns the `AppState` shap
 ```typescript
 // Vite config for the StayQuiet single-page app.
 // - `src` and `examples` aliases match the TypeScript paths in tsconfig.json.
-// - `node:fs` is aliased to a browser shim: the pre-existing transport barrel
-//   statically imports readFileSync for a code path this app never takes.
+// - No node-builtin alias is needed or wanted: nothing this app imports at runtime
+//   reaches src/platform/transport, so node:fs / node:crypto / node:http never enter
+//   the graph. If a build ever reports "Could not resolve node:…", the cause is a new
+//   runtime import from that directory — remove it rather than aliasing around it.
 // - The dev server proxies the API and the event stream to the Python service on
 //   8080, so `npm run dev` and the deployed container behave identically.
 // - The build writes to dist/, which src/stayquiet/api.py serves.
@@ -300,7 +350,6 @@ export default defineConfig({
     alias: {
       src: `${root}src`,
       examples: `${root}examples`,
-      "node:fs": `${root}src/stayquiet/web/shims/node-fs.ts`,
     },
   },
   server: {
@@ -362,17 +411,53 @@ if (el) createRoot(el).render(<App />);
 * `startRun()`: `POST /api/runs`; return `Boolean((await r.json()).started)`; on any failure return
   `false`.
 
+### §5.4a `subscribeEnvelopes()` and `isEnvelope()` algorithms
+
+`isEnvelope(value)` — a structural guard, not schema validation:
+
+1. Return `false` unless `value` is a non-null object.
+2. Return `true` only when all of these hold: `typeof v.step_id === "string"`,
+   `typeof v.status === "string"`, `typeof v.sequence === "number"`,
+   `typeof v.timestamp === "string"`, and `v.payload` is a non-null object.
+3. Nothing else is checked. The backend already builds every envelope in one place and the
+   repository's own `contracts/event-envelope.schema.json` check runs there (DP-STREAM WU-01), so a
+   second full validation in the browser would buy nothing and cost the ajv dependency this plan
+   cannot load.
+
+`subscribeEnvelopes({ onEnvelope, onStatus })`:
+
+1. `onStatus("connecting")`.
+2. `const es = new EventSource("/events/stream");` inside `try`. If the constructor throws — no
+   `EventSource` in this runtime — call `onStatus("error")` and return a no-op function.
+3. `es.addEventListener("open", () => onStatus("open"));`
+4. `es.addEventListener("envelope", (evt) => { … })` where the body is wrapped in
+   `try/catch` and does: `JSON.parse((evt as MessageEvent).data)`, then
+   `if (isEnvelope(parsed)) onEnvelope(parsed)`. A parse failure or a non-envelope is ignored
+   silently — one malformed frame must never stop the stream.
+   The event name is `envelope` because that is what the backend writes
+   (`event: envelope`, DP-API §5.2). Do not use `es.onmessage`: named events do not reach it.
+5. `es.onerror = () => onStatus(es.readyState === 2 ? "closed" : "connecting");` — the browser
+   reconnects on its own, so there is no retry policy to write here.
+6. Return `() => { try { es.close(); } catch { /* already closed */ } onStatus("closed"); }`.
+
+Nothing in this function imports anything. It is about twenty-five lines and it replaces a
+pre-existing hook that cannot run in a browser at all (§0) — that trade is the point.
+
 ### §5.5 `App.tsx` algorithm
 
 1. State: `const [state, setState] = useState<AppState>(EMPTY_STATE);` and
    `const [busyId, setBusyId] = useState<string | null>(null);`
-2. Stream: `const stream = useEventStream({ fallback: "none" });`
-   **`fallback: "none"` is required** — the built-in snapshot path parses against a JSON Schema it
-   loads from disk, which is Node-only. The poll in step 3 covers the same ground in the browser.
+2. Stream: hold `const [envs, setEnvs] = useState<EventEnvelope[]>([])` and
+   `const [streamStatus, setStreamStatus] = useState<StreamStatus>("connecting")`, then in a
+   `useEffect` with an empty dependency array call `subscribeEnvelopes({ onEnvelope, onStatus })`
+   and return its unsubscribe function as the effect's cleanup. `onEnvelope` inserts the envelope
+   into `envs` keeping the array sorted by `sequence` and dropping a duplicate `sequence`.
+   See §5.4a for `subscribeEnvelopes` itself.
 3. Poll: a `useEffect` that calls `fetchState()` immediately and then every 3000 ms via
    `setInterval`, clearing the interval on unmount.
-4. Envelopes to render: `const envelopes = stream.envelopes.length > 0 ? stream.envelopes :
-   state.events;` — the live stream wins; the poll fills in when SSE is unavailable.
+4. Envelopes to render: `const envelopes = envs.length > 0 ? envs : state.events;` — the live
+   stream wins; the `/api/state` poll fills in when SSE is unavailable, which is this app's
+   non-streaming fallback (SQ-F-10) and the reason no separate snapshot parser is needed.
 5. `onResolve(id, action, text)`: set `busyId` to `id`, `await resolveDecision(...)`, then
    `setState(await fetchState())` and clear `busyId`.
 6. `onRunNow()`: `await startRun()`, then refresh the state.
@@ -414,6 +499,25 @@ Use these strings verbatim so the video's voiceover matches the screen.
 | Footer cost note | `Estimated, not billed.` |
 
 ### §5.7 `QuietMonitor.tsx` algorithm
+
+*Amendment 2026-09-10 — two additions to the algorithm below, both load-bearing:*
+
+1. *`src/stayquiet/web/css.d.ts` (`declare module "*.css"`, §5.10a). `main.tsx` imports
+   three stylesheets for their global side effects, which Vite resolves at build time
+   but `tsc --noEmit` rejects with TS2882 per import. The pre-existing dev shell never
+   hit this because `tsconfig.json` includes only `src/` while the shell lives in
+   `examples/`. Without the declaration the repo's own type gate fails on every file
+   this plan adds. One line, no runtime effect.*
+2. *A "Latest draft" panel under the `StreamingTextRenderer`. The pre-existing renderer
+   skips degraded envelopes for text (`if (isDegradedEnvelope(e)) continue`) and shows
+   only its banner — correct for its chassis contract, but in StayQuiet's offline demo
+   EVERY draft envelope is degraded, so the monitor would show an empty draft box through
+   the whole video while the voiceover reads the reply. The panel renders the newest
+   `draft_reply`/`done` envelope's `payload.text` with the §5.6 degraded badge beside it
+   when that envelope is degraded. No read-only file is touched, no business logic is
+   added (pure rendering of an envelope field DP-AGENT already emits for this purpose),
+   and the specified `StreamingTextRenderer` usage — badge included — stays exactly as
+   written. The use-case decides: the host must see what was drafted.*
 
 1. Compute `pending = state.decisions.filter(d => d.status === "pending").length`.
 2. If `pending === 0`, render the quiet card first: the quiet title and body from §5.6, plus the
@@ -463,6 +567,13 @@ Use these strings verbatim so the video's voiceover matches the screen.
 4. Do not paginate and do not truncate `detail` — this is the dispute-defence view, and the video
    scrolls it.
 
+### §5.10a `css.d.ts` — complete file
+
+```typescript
+// StayQuiet UI — ambient declarations for stylesheet side-effect imports.
+declare module "*.css";
+```
+
 ### §5.10 `stayquiet.css`
 
 One stylesheet, using only the CSS custom properties already declared by
@@ -498,28 +609,31 @@ not invent colours or hardcode hex values. Required rules:
 **Goal.** A page that builds and shows the empty states with no backend running.
 
 **Steps.**
-1. Create `src/stayquiet/web/shims/node-fs.ts` with §3.4 verbatim.
-2. Replace `vite.config.ts` with §5.2 and `index.html` with §5.1.
-3. Create `src/stayquiet/web/labels.ts` with §3.1 verbatim.
-4. Create `src/stayquiet/web/api.ts` per §3.2 and §5.4.
+1. Replace `vite.config.ts` with §5.2 and `index.html` with §5.1.
+2. Create `src/stayquiet/web/labels.ts` with §3.1 verbatim.
+3. Create `src/stayquiet/web/api.ts` per §3.2, §5.4 and §5.4a — including `subscribeEnvelopes` and
+   `isEnvelope`.
 5. Create `src/stayquiet/web/stayquiet.css` per §5.10 and `src/stayquiet/web/main.tsx` per §5.3.
 6. Create the three components and `App.tsx` as **empty-state-only** renderers for now: the header,
    the synthetic banner, the quiet card, the three pre-existing components with `envelopes={[]}`,
    and the audit empty state. No fetching yet.
 
-**Files created/modified.** all eleven files in §2 IN.
+**Files created/modified.** all ten files in §2 IN.
 
 **Verification command.**
 ```bash
-npm run build:ui 2>&1 | tail -5
+npm run build:ui 2>&1 | tail -6; grep -rn "from \"src/platform/transport\"" src/stayquiet/web/ | grep -v "^.*import type" | wc -l
 ```
-**Expected output.** The last lines report a successful build, including a line naming
-`dist/index.html` and at least one `dist/assets/*.js`, and end with `built in <n>s`. There must be
-no line containing `error` or `Could not resolve`.
-
-**What it proves.** The browser bundle compiles against the pre-existing UI and transport modules,
-and the `node:fs` shim keeps the statically-imported Node built-in from breaking the build — the
-single most likely build failure in this plan.
+**Expected output.** The build's last lines report success — a line naming `dist/index.html`, at
+least one `dist/assets/*.js`, and `built in <n>s` — with no line containing `error` or
+`Could not resolve`. Then:
+```
+0
+```
+**What it proves.** The browser bundle compiles against the pre-existing UI components, and no file
+imports the transport barrel at runtime. Those are the same fact: a single runtime import from that
+barrel fails the build with four `Could not resolve "node:…"` errors, which is the most likely
+failure in this plan (§0).
 
 ---
 
@@ -528,18 +642,27 @@ single most likely build failure in this plan.
 **Goal.** The real screen: stream, poll, decision cards, audit trail.
 
 **Steps.**
-1. Implement `App.tsx` per §5.5, including `useEventStream({ fallback: "none" })` and the
-   3-second poll.
+1. Implement `App.tsx` per §5.5, including the `subscribeEnvelopes` effect and the 3-second poll.
 2. Implement `QuietMonitor.tsx` (§5.7), `DecisionPing.tsx` (§5.8) and `AuditTrail.tsx` (§5.9),
    using the §5.6 copy verbatim.
-3. Confirm by grep that no `<input type="text">` and no chat field exists outside
-   `DecisionPing.tsx`'s edit `<textarea>`.
+ 3. Confirm by grep that no `<input type="text">` and no chat field exists outside
+    `DecisionPing.tsx`'s edit `<textarea>`.
+
+*Amendment 2026-09-10 — citation list scope.* Step 3 of §5.7 passes the full envelope
+list to `CitationDisplay`. That component renders its degraded banner when ANY
+envelope in its list is degraded — including an unrelated degraded draft — so with
+the specified wiring the citations panel showed a lone "none" badge in every demo
+run (no `clause_lookup` envelope is ever degraded, and in demo mode none exists at
+all). `QuietMonitor` therefore passes only envelopes whose payload carries a
+non-empty `citations` or `sources` array; a genuinely degraded clause lookup that
+still carries citations keeps its banner through the same rule, and the empty state
+("No policy clause read yet.") is honest when nothing was read.
 
 **Files modified.** `App.tsx`, `QuietMonitor.tsx`, `DecisionPing.tsx`, `AuditTrail.tsx`.
 
 **Verification command.**
 ```bash
-npm run build:ui > /dev/null 2>&1 && grep -c "textarea" src/stayquiet/web/DecisionPing.tsx && grep -rl "useEventStream" src/stayquiet/web/ && grep -rc "type=\"text\"\|placeholder=\"Ask" src/stayquiet/web/*.tsx | grep -v ":0" | wc -l
+npm run build:ui > /dev/null 2>&1 && grep -c "textarea" src/stayquiet/web/DecisionPing.tsx && grep -rl "subscribeEnvelopes(" src/stayquiet/web/*.tsx && grep -rc "type=\"text\"\|placeholder=\"Ask" src/stayquiet/web/*.tsx | grep -v ":0" | wc -l
 ```
 **Expected output.**
 ```
@@ -548,11 +671,12 @@ src/stayquiet/web/App.tsx
 0
 ```
 **What it proves.** The build still passes with the live wiring, the edit textarea exists exactly
-once, the stream hook is used in exactly one place, and there is no text input or "Ask…" field
-anywhere — the no-chat-box rule holds mechanically, not just by intention.
+once, the subscription is opened in exactly one component, and there is no text input or "Ask…"
+field anywhere — the no-chat-box rule holds mechanically, not just by intention.
 
-> The middle line is the output of `grep -rl`; if `useEventStream` is imported in a second file,
-> two paths print and the work unit fails.
+> The middle line is the output of `grep -rl`; if `subscribeEnvelopes(` is called from a second
+> component, two paths print and the work unit fails. Opening two `EventSource` connections would
+> double every envelope in the UI.
 
 ---
 
@@ -605,7 +729,7 @@ is what the live-demo link has to be.
 # WU-UI-01
 npm run build:ui 2>&1 | tail -5
 # WU-UI-02
-npm run build:ui > /dev/null 2>&1 && grep -c "textarea" src/stayquiet/web/DecisionPing.tsx && grep -rl "useEventStream" src/stayquiet/web/ && grep -rc "type=\"text\"\|placeholder=\"Ask" src/stayquiet/web/*.tsx | grep -v ":0" | wc -l
+npm run build:ui > /dev/null 2>&1 && grep -c "textarea" src/stayquiet/web/DecisionPing.tsx && grep -rl "subscribeEnvelopes(" src/stayquiet/web/*.tsx && grep -rc "type=\"text\"\|placeholder=\"Ask" src/stayquiet/web/*.tsx | grep -v ":0" | wc -l
 # WU-UI-03
 STAYQUIET_DEMO_MODE=1 python -c "
 from fastapi.testclient import TestClient
@@ -621,8 +745,9 @@ with TestClient(app) as c:
 
 | Risk | Mitigation |
 |---|---|
-| The browser build fails on the transport barrel's `node:fs` import | the shim plus the `node:fs` alias in `vite.config.ts`; WU-01's whole purpose is to catch this on day one |
-| `useEventStream`'s built-in fallback runs in the browser and throws | `fallback: "none"` is required by §5.5 step 2, and the 3-second `/api/state` poll covers the same need |
+| The browser build fails on a Node builtin reached through the transport barrel | §0 explains the mechanism, §4 imports the envelope as a type only from the generated module, and WU-01's second check asserts zero runtime imports from that directory |
+| An implementor "restores" `useEventStream` because the plan reuses everything else | §0 documents both failure modes with the exact error strings, and §2's prohibition names the rule; the twenty-five lines in §5.4a are the deliberate exception to reuse |
+| No non-streaming fallback because the pre-existing snapshot parser is unused | the 3-second `/api/state` poll carries `events`, so the UI fills in with no SSE at all — asserted by DP-API WU-03 |
 | A judge sees a chat box and concludes it is another app to babysit | §2's first prohibition and WU-02's grep; the only input is the edit textarea |
 | The UI drifts from the API shape | `AppState` in §3.2 mirrors DP-API §5.3 field for field, and `fetchState` spreads over `EMPTY_STATE` so a mismatch degrades instead of crashing |
 | Hardcoded colours make the recording inconsistent with the slides | §5.10 requires the pre-existing token variables only; DP-SCRIPT reads the same tokens for its slide palette |

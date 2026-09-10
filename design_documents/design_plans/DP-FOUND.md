@@ -467,15 +467,25 @@ resolve. StayQuiet's frontend imports the concrete barrels instead.
 
 ```typescript
 // Public TypeScript barrel for the parts of this repository the browser bundle uses.
-// Only barrels that actually exist are re-exported; frontend code should prefer the
-// concrete path (e.g. "src/platform/transport") so ownership stays obvious.
-export * from "./platform/transport/index.js";
+// Only browser-safe surfaces are re-exported. The envelope arrives as a TYPE ONLY,
+// from the generated module rather than the transport barrel: that barrel's runtime
+// exports (publisher, subscriber, fallback, stream_router) statically import
+// node:fs, node:crypto and node:http, and any runtime re-export drags all three
+// into a browser bundle. Frontend code should still prefer the concrete path.
+export type { DegradedResultRef, EventEnvelope } from "./platform/transport/event-envelope.js";
 export * from "./platform/ui/index.js";
 ```
 
-`src/context/index.ts` and `src/resilience/index.ts` are intentionally NOT re-exported here:
-`src/context` is loaded only by the Node-side context bridge and `src/resilience/index.ts` pulls
-Node-only modules that must stay out of the browser bundle.
+Why the transport barrel is type-only here: bundling an entry that imports it for the browser fails
+with `Could not resolve "node:fs"` (twice), `"node:crypto"` and `"node:http"`. The generated
+`event-envelope.ts` is pure type declarations and imports nothing, so a `export type { … }` from it
+erases completely at compile time. `src/context/index.ts` and `src/resilience/index.ts` are
+intentionally not re-exported either: `src/context` is loaded only by the Node-side context bridge,
+and the resilience barrel resolves Node builtins lazily for Node callers.
+
+**If `src/index.ts` was already written with the runtime `export * from
+"./platform/transport/index.js"` line, replace those two lines with the block above.** It is a
+two-line edit and nothing imports the file yet.
 
 ## §6 Failure modes
 
@@ -522,7 +532,13 @@ node-ok true
 **Steps.**
 1. Create `requirements.txt` with the literal contents of §5.3.
 2. Replace `pyproject.toml` wholesale with the literal contents of §5.4.
-3. Run `pip install -r requirements.txt`.
+3. Run `python -m pip install -r requirements.txt` — **`python -m pip`, not bare `pip`**. On a
+   machine with several interpreters (a uv-managed 3.12 alongside a system 3.14, for example) bare
+   `pip` can install into an interpreter that is not the one `python` resolves to, and every later
+   verification command then fails with `ModuleNotFoundError` for a package that is installed.
+   `python -m pip` always targets the interpreter the rest of this plan uses. If the environment is
+   externally managed and refuses the install, add `--break-system-packages` or create a virtual
+   environment first, and record which you did in the run report.
 4. If `strands-agents` fails to install, stop and report the error verbatim — do not substitute
    another framework, do not vendor code, do not proceed. The SDK is the hackathon's only hard
    technology mandate.
@@ -633,16 +649,28 @@ later plan imports, and the MIT licence file the submission rules demand is pres
 
 **Files created/modified.** `src/index.ts`.
 
-**Verification command.**
+**Verification command.** TypeScript 7 refuses to load `tsconfig.json` when files are named on
+the command line (`error TS5112`), which makes a per-file invocation report that one error and
+nothing about the file itself. Run the compiler in project mode and filter to the blocking scope:
+
 ```bash
-npx tsc --noEmit src/index.ts --module nodenext --moduleResolution nodenext --target es2022 --jsx react-jsx --skipLibCheck 2>&1 | grep -c "src/index.ts" || echo 0
+npx tsc --noEmit 2>&1 | grep -E "^(src/index\.ts|src/platform/|src/context/)" | wc -l; npx tsc --noEmit 2>&1 | grep -E "error TS" | sed "s/(.*//" | sort -u
 ```
 **Expected output.**
 ```
 0
+src/ideation/demodrive/feeder.ts
 ```
-**What it proves.** `src/index.ts` itself resolves — the two barrels it re-exports exist — so no
-consumer of the TypeScript side starts from an unresolvable import.
+**What it proves.** No error is reported in `src/index.ts` or in the two directories the browser
+bundle compiles (`src/platform/`, `src/context/`), and the only file that does report one is
+`src/ideation/demodrive/feeder.ts` — a pre-existing reference to the `dev-tooling` module, which
+`design_documents/proposal.json` excludes. That is the non-blocking case step 3 describes; record it
+and continue.
+
+The second command exists so the first cannot pass vacuously: it lists every file with an error, so
+a new failure anywhere is visible even when it is outside the filtered scope. To confirm the filter
+really bites, append `export * from "./nope.js";` to `src/index.ts`, re-run, see `1`, then remove
+it.
 
 ---
 

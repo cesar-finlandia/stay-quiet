@@ -1,0 +1,334 @@
+/*
+  StayQuiet — visual identity token layer.
+  See design_documents/visual_identity_plan.md for the rationale behind every value.
+
+  This file is loaded AFTER src/platform/ui/tokens.css (the chassis token contract).
+  It does two things and nothing else:
+
+    1. Declares the StayQuiet design system as --sq-* custom properties, in two
+       colour modes: "Daylight Linen" (light) and "Night Desk" (dark).
+    2. Re-points the chassis's --ui-* contract at those --sq-* values, so the three
+       pre-existing platform/ui components inherit the identity without a single
+       edit to their source. That is the contract working as designed (UI-03/UI-04).
+
+  Colour mode lives on <html data-sq-mode="light|dark">, set before first paint by
+  the boot script in index.html and thereafter by src/stayquiet/web/theme.ts.
+  Both selectors are attribute selectors, so they outrank the chassis defaults
+  regardless of which theme id the chassis happens to have set.
+*/
+
+/* ─────────────────────────────  Typefaces  ───────────────────────────── */
+/* Vendored variable fonts — no external request, so the demo, the recorded
+   video and the offline container all render identically. */
+
+@font-face {
+  font-family: "Fraunces";
+  src: url("/assets/fonts/fraunces.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Fraunces";
+  src: url("/assets/fonts/fraunces-ext.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("/assets/fonts/inter.woff2") format("woff2");
+  font-weight: 300 800;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("/assets/fonts/inter-ext.woff2") format("woff2");
+  font-weight: 300 800;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/assets/fonts/jetbrains-mono.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/assets/fonts/jetbrains-mono-ext.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ─────────────────────  Mode-independent primitives  ────────────────────── */
+
+html[data-sq-mode] {
+  /* Type families */
+  --sq-font-display: "Fraunces", "Iowan Old Style", Georgia, "Times New Roman", serif;
+  --sq-font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --sq-font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", "Cascadia Mono", monospace;
+
+  /* Type scale — 16px root, ~1.25 modular, clamped for a 1080p screen recording */
+  --sq-text-2xs: 0.75rem;    /* 12px — mono meta, sequence ids */
+  --sq-text-xs: 0.8125rem;   /* 13px — chips, badges, footers */
+  --sq-text-sm: 0.875rem;    /* 14px — secondary prose, audit detail */
+  --sq-text-base: 0.9375rem; /* 15px — UI default */
+  --sq-text-md: 1rem;        /* 16px — body prose, drafts */
+  --sq-text-lg: 1.125rem;    /* 18px — decision summary */
+  --sq-text-xl: 1.375rem;    /* 22px — section headings */
+  --sq-text-2xl: 1.75rem;    /* 28px — card headings */
+  --sq-text-3xl: clamp(2rem, 1.4rem + 2.2vw, 2.75rem);  /* wordmark */
+  --sq-text-4xl: clamp(2.5rem, 1.6rem + 3.4vw, 3.5rem); /* exposure figure */
+
+  --sq-weight-light: 350;
+  --sq-weight-regular: 400;
+  --sq-weight-medium: 520;
+  --sq-weight-semibold: 620;
+  --sq-weight-bold: 720;
+
+  --sq-leading-tight: 1.16;
+  --sq-leading-snug: 1.34;
+  --sq-leading-normal: 1.55;
+  --sq-leading-relaxed: 1.72;
+
+  --sq-tracking-tight: -0.018em;
+  --sq-tracking-normal: 0em;
+  --sq-tracking-wide: 0.04em;
+  --sq-tracking-caps: 0.11em;
+
+  /* Spacing — 4px base */
+  --sq-space-1: 4px;
+  --sq-space-2: 8px;
+  --sq-space-3: 12px;
+  --sq-space-4: 16px;
+  --sq-space-5: 20px;
+  --sq-space-6: 24px;
+  --sq-space-8: 32px;
+  --sq-space-10: 40px;
+  --sq-space-12: 48px;
+  --sq-space-16: 64px;
+  --sq-space-20: 80px;
+
+  /* Radii */
+  --sq-radius-xs: 4px;
+  --sq-radius-sm: 7px;
+  --sq-radius-md: 11px;
+  --sq-radius-lg: 16px;
+  --sq-radius-xl: 22px;
+  --sq-radius-pill: 999px;
+
+  /* Layout */
+  --sq-shell-max: 74rem;
+  --sq-prose-max: 62ch;
+  --sq-border-hair: 1px;
+
+  /* Motion — one duration and one easing vocabulary for the whole app */
+  --sq-dur-instant: 90ms;
+  --sq-dur-fast: 160ms;
+  --sq-dur-base: 260ms;
+  --sq-dur-slow: 420ms;
+  --sq-dur-deliberate: 720ms;
+  --sq-dur-ambient: 5200ms; /* breathing beacon; deliberately slower than a pulse */
+  --sq-ease-standard: cubic-bezier(0.32, 0.72, 0.24, 1);
+  --sq-ease-entrance: cubic-bezier(0.16, 1, 0.3, 1);
+  --sq-ease-exit: cubic-bezier(0.55, 0, 0.85, 0.35);
+  --sq-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ───────────────────  Light mode — "Daylight Linen"  ─────────────────────
+   Warm paper, ink, and a verdigris green. The reference is a well-kept
+   guesthouse ledger in morning light: neutral greys are warmed toward the
+   linen end so nothing on the page reads as a developer console.          */
+
+html[data-sq-mode="light"] {
+  color-scheme: light;
+
+  /* Surfaces */
+  --sq-bg: #faf7f2;
+  --sq-bg-tint: #f4efe6;
+  --sq-surface: #ffffff;
+  --sq-surface-raised: #ffffff;
+  --sq-surface-sunken: #f1ece3;
+  --sq-surface-inverted: #1c1a17;
+
+  /* Ink */
+  --sq-fg: #1c1a17;
+  --sq-fg-strong: #0e0d0b;
+  --sq-fg-muted: #6b6459;
+  --sq-fg-subtle: #928a7c;
+  --sq-fg-inverted: #faf7f2;
+
+  /* Lines */
+  --sq-border: #e6ded1;
+  --sq-border-strong: #cfc4b2;
+  --sq-border-focus: #127c71;
+
+  /* Brand — verdigris. The colour of "handled". */
+  --sq-brand: #0f6f65;
+  --sq-brand-hover: #0b5a52;
+  --sq-brand-active: #084841;
+  --sq-brand-fg: #ffffff;
+  --sq-brand-soft: #e2f0ed;
+  --sq-brand-soft-fg: #0b544c;
+  --sq-brand-glow: rgba(18, 124, 113, 0.22);
+
+  /* Ember — the interrupt. Used only where the host's judgement is required. */
+  --sq-ember: #b0510b;
+  --sq-ember-hover: #94430a;
+  --sq-ember-fg: #ffffff;
+  --sq-ember-soft: #fceadb;
+  --sq-ember-soft-fg: #8c3f08;
+  --sq-ember-glow: rgba(176, 81, 11, 0.2);
+
+  /* Decision-kind accents */
+  --sq-kind-refund: #b0510b;
+  --sq-kind-refund-soft: #fceadb;
+  --sq-kind-exception: #6a48a6;
+  --sq-kind-exception-soft: #eee8fa;
+  --sq-kind-risk: #ab2f57;
+  --sq-kind-risk-soft: #fbe6ec;
+
+  /* Status */
+  --sq-success: #2c7a4b;
+  --sq-success-soft: #e3f2e7;
+  --sq-warning: #8a6100;
+  --sq-warning-soft: #fdf3d9;
+  --sq-danger: #b02525;
+  --sq-danger-soft: #fbe6e6;
+  --sq-info: #2a6099;
+  --sq-info-soft: #e5eefa;
+  --sq-neutral-soft: #f1ece3;
+
+  /* Elevation — warm-tinted, never neutral black */
+  --sq-shadow-xs: 0 1px 2px rgba(56, 44, 28, 0.06);
+  --sq-shadow-sm: 0 1px 2px rgba(56, 44, 28, 0.06), 0 2px 6px rgba(56, 44, 28, 0.05);
+  --sq-shadow-md: 0 2px 4px rgba(56, 44, 28, 0.05), 0 8px 20px rgba(56, 44, 28, 0.07);
+  --sq-shadow-lg: 0 4px 8px rgba(56, 44, 28, 0.05), 0 18px 44px rgba(56, 44, 28, 0.1);
+  --sq-shadow-ember: 0 6px 24px rgba(176, 81, 11, 0.14);
+  --sq-ring: 0 0 0 3px rgba(18, 124, 113, 0.28);
+
+  /* Ambient field — the two soft washes behind the shell */
+  --sq-aurora-a: rgba(18, 124, 113, 0.13);
+  --sq-aurora-b: rgba(176, 81, 11, 0.09);
+  --sq-grain-opacity: 0.055;
+  --sq-scrim: rgba(250, 247, 242, 0.78);
+}
+
+/* ─────────────────────  Dark mode — "Night Desk"  ────────────────────────
+   The same room after midnight: ink with a green cast, bone-white type, and
+   an aqua that reads as a screen glowing in a dark hallway. Deliberately not
+   pure black — a solo host checks this from bed, and #000 on OLED strobes. */
+
+html[data-sq-mode="dark"] {
+  color-scheme: dark;
+
+  --sq-bg: #0d1413;
+  --sq-bg-tint: #101917;
+  --sq-surface: #141d1b;
+  --sq-surface-raised: #182321;
+  --sq-surface-sunken: #0a100f;
+  --sq-surface-inverted: #eae6df;
+
+  --sq-fg: #e9e5de;
+  --sq-fg-strong: #f7f4ef;
+  --sq-fg-muted: #9ba7a2;
+  --sq-fg-subtle: #74817c;
+  --sq-fg-inverted: #0d1413;
+
+  --sq-border: #21302d;
+  --sq-border-strong: #33453f;
+  --sq-border-focus: #5ee0c7;
+
+  --sq-brand: #5ee0c7;
+  --sq-brand-hover: #7cead4;
+  --sq-brand-active: #45c7ae;
+  --sq-brand-fg: #06201c;
+  --sq-brand-soft: #10312c;
+  --sq-brand-soft-fg: #7cead4;
+  --sq-brand-glow: rgba(94, 224, 199, 0.22);
+
+  --sq-ember: #f2a65a;
+  --sq-ember-hover: #f7bd80;
+  --sq-ember-fg: #2a1806;
+  --sq-ember-soft: #33230f;
+  --sq-ember-soft-fg: #f7bd80;
+  --sq-ember-glow: rgba(242, 166, 90, 0.22);
+
+  --sq-kind-refund: #f2a65a;
+  --sq-kind-refund-soft: #33230f;
+  --sq-kind-exception: #b79bf0;
+  --sq-kind-exception-soft: #241d3a;
+  --sq-kind-risk: #f27a9d;
+  --sq-kind-risk-soft: #351824;
+
+  --sq-success: #5bc98c;
+  --sq-success-soft: #0f2c1e;
+  --sq-warning: #e8c468;
+  --sq-warning-soft: #2c240d;
+  --sq-danger: #f08080;
+  --sq-danger-soft: #331616;
+  --sq-info: #7fb0ea;
+  --sq-info-soft: #12243a;
+  --sq-neutral-soft: #182322;
+
+  --sq-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --sq-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.44), 0 2px 8px rgba(0, 0, 0, 0.32);
+  --sq-shadow-md: 0 2px 6px rgba(0, 0, 0, 0.46), 0 10px 26px rgba(0, 0, 0, 0.4);
+  --sq-shadow-lg: 0 6px 14px rgba(0, 0, 0, 0.5), 0 24px 56px rgba(0, 0, 0, 0.46);
+  --sq-shadow-ember: 0 6px 28px rgba(242, 166, 90, 0.18);
+  --sq-ring: 0 0 0 3px rgba(94, 224, 199, 0.32);
+
+  --sq-aurora-a: rgba(94, 224, 199, 0.11);
+  --sq-aurora-b: rgba(242, 166, 90, 0.08);
+  --sq-grain-opacity: 0.075;
+  --sq-scrim: rgba(13, 20, 19, 0.78);
+}
+
+/* ───────────────  Chassis contract, re-pointed at the identity  ───────────
+   The three pre-existing components read only these. Changing them here is
+   exactly the swap src/platform/ui/tokens.css was written to allow, and it is
+   why StepStatusIndicator, StreamingTextRenderer and CitationDisplay pick up
+   both StayQuiet modes without a line of component code changing.          */
+
+html[data-sq-mode="light"],
+html[data-sq-mode="dark"] {
+  --ui-font-family: var(--sq-font-sans);
+  --ui-font-size-base: 16px;
+  --ui-line-height: var(--sq-leading-normal);
+  --ui-spacing-unit: 8px;
+  --ui-radius: var(--sq-radius-md);
+  --ui-color-bg: var(--sq-bg);
+  --ui-color-fg: var(--sq-fg);
+  --ui-color-accent: var(--sq-brand);
+  --ui-color-accent-soft: var(--sq-brand-soft);
+  --ui-color-degraded-bg: var(--sq-warning-soft);
+  --ui-layout-max: var(--sq-shell-max);
+  --ui-layout-gap: var(--sq-space-6);
+}

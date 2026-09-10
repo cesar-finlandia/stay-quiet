@@ -1,17 +1,14 @@
-# TODO(ENGINE): replace these stubs with your Engine — start at docs/engine-guide.md
+# engine/
 
-# Engine
+The agent itself.
 
-This directory is YOURS. It holds the parts the hackathon judges experience:
-agent entry points (`agents/`), prompts (`prompts/`), I/O schemas (`schema/`),
-retrieval corpus (`rag/`), and voice policy (`voice/`). Every file arrived as a
-`TODO(ENGINE)` stub — replace them per `docs/engine-guide.md`. Agent calls are
-pre-wrapped by the resilience layer (RES-01), so your first working version is
-already demo-proof against timeouts/provider hiccups.
+| Path | What is in it |
+|---|---|
+| `agents/stayquiet_agent.py` | the Strands agent loop, the deterministic triage gate, and `run_cycle()` |
+| `tools/` | the six tools the loop may call. All deterministic: they read the synthetic fixtures, compute, emit a progress envelope, and return JSON. None of them calls a model |
+| `prompts/` | the system prompt and the two task prompts, as plain Markdown |
+| `schema/` | JSON Schemas for a cycle's input and output |
+| `bridge/` | a small Node bridge to the conversation-buffer implementation, used to trim a long guest thread to a token budget |
 
-## What the chassis is NOT
-
-The chassis deliberately ships NO domain answers: no personas, no pre-written
-prompts, no corpus content, no fixed agent graph, no voice policy decisions.
-Those are your hour-1 design work (NONGOAL-01..04). Assembling again with more
-components never overwrites edits you make here (ASM-05 preservation).
+The division of labour is deliberate: Python decides **which** bookings need work and **whether**
+the host is interrupted; the model decides **how** to say it.

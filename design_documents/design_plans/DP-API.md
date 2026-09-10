@@ -511,7 +511,11 @@ import time
 from fastapi.testclient import TestClient
 from src.stayquiet.api import app
 with TestClient(app) as c:
-    time.sleep(4)                      # nobody has asked for anything
+    for _ in range(20):                  # nobody has asked for anything; only reads
+        st = c.get('/api/state').json()
+        if st['run'] and st['run']['status'] in ('done', 'error') and not st['cycle_running']:
+            break
+        time.sleep(0.5)
     st = c.get('/api/state').json()
     print('unprompted-run', st['run'] is not None, st['run']['bookings_affected'] if st['run'] else None)
     snap = c.get('/events').json()
@@ -525,6 +529,16 @@ unprompted-run True 4
 snapshot complete True True
 interval 5
 ```
+
+Amendment 2026-09-10: the command used to read state after a fixed `sleep(4)`. The
+scheduler's first tick fires at t=2s but a demo cycle takes ~2.3s (eight
+resilience-wrapped turns, each with its mandated retry/backoff), so at t=4s the
+unprompted run is still `running`: `bookings_affected` reads 0 and no degraded
+envelope exists yet (measured: `True 0` / `complete True False`). The properties
+under test — a run started with nobody asking, and it completes with the
+deterministic counts — do not depend on a wall-clock guess, so the command now
+polls boundedly for completion (the same 0.5 s pattern WU-API-02 uses) instead of
+assuming a fixed duration. Asserted values are unchanged.
 **What it proves.** A cycle ran two seconds after startup with no request, no prompt and no button
 — the product's core claim (SQ-F-09) — and the complete run is retrievable from the non-streaming
 `/events` snapshot alone, which is the bottom rung of the transport ladder (SQ-F-10).
@@ -570,7 +584,10 @@ import time
 from fastapi.testclient import TestClient
 from src.stayquiet.api import app
 with TestClient(app) as c:
-    time.sleep(4)
+    for _ in range(20):
+        st=c.get('/api/state').json()
+        if st['run'] and st['run']['status'] in ('done','error') and not st['cycle_running']: break
+        time.sleep(0.5)
     st=c.get('/api/state').json()
     print('unprompted-run', st['run'] is not None, st['run']['bookings_affected'] if st['run'] else None)
     snap=c.get('/events').json(); print('snapshot', snap['status'], len(snap['events'])>0, snap['degraded'])

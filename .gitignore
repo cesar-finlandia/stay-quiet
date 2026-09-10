@@ -16,6 +16,16 @@ secrets*.json
 .cache/
 # chassis artifacts not in submission
 /examples/
+# StayQuiet (DP-SUBMIT WU-04 amendment 2026-09-10): regenerable build outputs that
+# must never be committed. node_modules/ is required absent for the leaks gate and
+# keeps vendored example keys out of secret scans; dist/ is rebuilt by
+# `npm run build:ui` (and inside Dockerfile stage 1).
+node_modules/
+dist/
+# Python bytecode and caches — never committed; the interpreter regenerates them.
+__pycache__/
+*.py[cod]
+.pytest_cache/
 # IDE
 .DS_Store
 # --- run_sweep.sh engine-building harness (added 2026-08-25, DP-G amendment):
@@ -41,3 +51,12 @@ _run.log
 run_state.json
 handout.md
 handout_active.md
+fixtures/audit/
+
+
+/design_documents/
+/templates/
+/private/
+/demo/
+/deck/
+script.md
