@@ -47,6 +47,11 @@ SSE_KEEPALIVE_POLLS: int = 60
 #: Directory the built SPA is served from (`npm run build:ui` output).
 DIST_DIR: Path = repo_root() / "dist"
 
+#: Version marker for the duplicate-suppression fix (2026-09-12). Returned by
+#: /api/state and /healthz so a deployment can be verified to carry the fix
+#: with one request, without guessing from bundle hashes.
+CODE_VERSION: str = "dedupe-1"
+
 #: Only one cycle may run at a time: the tools share a module-level trace id.
 _cycle_lock = threading.Lock()
 
@@ -120,6 +125,7 @@ def build_state() -> dict:
             "cost": cost_snapshot(),
             "events": latest_envs,
             "latest_sequence": latest_sequence(),
+            "code_version": CODE_VERSION,
             "config": {
                 "demo_mode": cfg["demo_mode"],
                 "model_id": cfg["model_id"],
@@ -200,7 +206,7 @@ def create_app() -> FastAPI:
     @app.get("/healthz")
     async def healthz():
         return {"ok": True, "cycle_running": cycle_running(),
-                "sequence": latest_sequence()}
+                "sequence": latest_sequence(), "code_version": CODE_VERSION}
 
     @app.get("/events/stream")
     async def events_stream(request: Request, trace_id: str | None = None):
