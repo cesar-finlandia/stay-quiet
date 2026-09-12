@@ -196,6 +196,11 @@ def add_decision(
     round(payout_eur * EXPOSURE_FACTOR[kind], 2) — the single place that formula
     lives. An unknown `kind` falls back to factor 0.25 with one stderr warning.
     Never raises.
+
+    Idempotent across scheduler repeats: when a *pending* decision for the same
+    booking and kind already exists, it is returned unchanged instead of
+    creating a duplicate (identical fixtures re-escalate the same bookings
+    every cycle).
     """
     try:
         factor = EXPOSURE_FACTOR.get(kind)  # type: ignore[arg-type]
@@ -208,6 +213,16 @@ def add_decision(
         exposure = 0.0
     try:
         with _lock:
+            for existing_id in reversed(_decision_order):
+                existing = _decisions.get(existing_id)
+                if (existing is not None
+                        and existing.get("status") == "pending"
+                        and existing.get("booking_id") == str(booking_id)
+                        and existing.get("kind") == kind):
+                    run = _runs.get(run_id)
+                    if run is not None and existing_id not in run["decisions"]:
+                        run["decisions"].append(existing_id)
+                    return dict(existing)
             decision_id = "DEC-" + uuid.uuid4().hex[:8]
             decision: Decision = {
                 "decision_id": decision_id,

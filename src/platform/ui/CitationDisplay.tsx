@@ -52,12 +52,23 @@ export function CitationDisplay(props: CitationDisplayProps) {
   // Collect citations across all envelopes in sequence order; each envelope may
   // carry payload[payloadKey] or payload.sources (domain's choice). Degraded
   // payloads are skipped here — their data renders via the banner only.
+  // Dedupe: repeated background cycles re-emit the same policy text, so an
+  // identical title+snippet already shown is not added again.
   const citations: Citation[] = [];
+  const seen = new Set<string>();
+  const pushUnique = (list: Citation[]): void => {
+    for (const c of list) {
+      const key = `${c.title}\n${c.snippet ?? ""}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      citations.push(c);
+    }
+  };
   for (const e of ordered) {
     if (isDegradedEnvelope(e)) continue;
     const payload = (e.payload ?? {}) as Record<string, unknown>;
-    citations.push(...asCitations(payload[payloadKey]));
-    if (payloadKey !== "sources") citations.push(...asCitations(payload["sources"]));
+    pushUnique(asCitations(payload[payloadKey]));
+    if (payloadKey !== "sources") pushUnique(asCitations(payload["sources"]));
   }
 
   // Degraded banner (UI-RES-02 §7.2), shared treatment across components.

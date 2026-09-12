@@ -47,6 +47,21 @@ function IconInfo(): JSX.Element {
   );
 }
 
+/** Stable content key: sequence/trace/timestamp differ every cycle, the rest
+ *  identifies what the host actually sees. Two envelopes with the same key are
+ *  the same entry shown twice. */
+function envelopeContentKey(env: EventEnvelope): string {
+  try {
+    return `${env.step_id}\n${env.status}\n${JSON.stringify(env.payload ?? null)}`;
+  } catch {
+    return `${env.step_id}\n${env.status}`;
+  }
+}
+
+/** Max streamed envelopes kept in a long-lived tab. The scheduler emits ~30
+ *  per cycle, so 300 covers several cycles without growing forever. */
+const MAX_STREAM_ENVELOPES = 300;
+
 export function App(): JSX.Element {
   const [state, setState] = useState<AppState>(EMPTY_STATE);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -60,7 +75,14 @@ export function App(): JSX.Element {
       onEnvelope: (env) => {
         setEnvs((prev) => {
           if (prev.some((e) => e.sequence === env.sequence)) return prev;
-          return [...prev, env].sort((a, b) => a.sequence - b.sequence);
+          // Same entry already shown (re-emitted by a later identical cycle):
+          // do not add a duplicate.
+          const key = envelopeContentKey(env);
+          if (prev.some((e) => envelopeContentKey(e) === key)) return prev;
+          const next = [...prev, env].sort((a, b) => a.sequence - b.sequence);
+          return next.length > MAX_STREAM_ENVELOPES
+            ? next.slice(next.length - MAX_STREAM_ENVELOPES)
+            : next;
         });
       },
       onStatus: (s) => setStreamStatus(s),

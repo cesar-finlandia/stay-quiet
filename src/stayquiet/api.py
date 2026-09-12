@@ -32,7 +32,7 @@ from engine.agents import run_cycle
 from src.stayquiet.audit import audit_append, audit_read
 from src.stayquiet.config import load_app_config, repo_root
 from src.stayquiet.model import cost_snapshot
-from src.stayquiet.publish import emit, latest_sequence, new_trace_id, since, snapshot
+from src.stayquiet.publish import emit, envelopes, latest_sequence, new_trace_id, since, snapshot
 from src.stayquiet.store import get_decision, latest_run, list_decisions, resolve_decision
 
 #: Seconds between SSE polls of the envelope ring. 0.25 s is invisible to a viewer
@@ -101,6 +101,16 @@ def build_state() -> dict:
         cfg = load_app_config()
         pending = list_decisions("pending")
         resolved = [d for d in list_decisions() if d["status"] != "pending"]
+        # Scope events to the latest cycle's trace: the ring keeps every cycle
+        # (~30 envelopes each), and returning all of them made /api/state grow
+        # to hundreds of duplicated entries after a day of scheduler ticks.
+        # The UI dedupes identical content on top of this.
+        all_envs = envelopes()
+        if all_envs:
+            latest_tid = all_envs[-1].get("trace_id")
+            latest_envs = [e for e in all_envs if e.get("trace_id") == latest_tid]
+        else:
+            latest_envs = []
         return {
             "synthetic": True,
             "run": latest_run(),
@@ -108,7 +118,7 @@ def build_state() -> dict:
             "decisions": pending + resolved,
             "audit": audit_read(60),
             "cost": cost_snapshot(),
-            "events": snapshot()["events"],
+            "events": latest_envs,
             "latest_sequence": latest_sequence(),
             "config": {
                 "demo_mode": cfg["demo_mode"],

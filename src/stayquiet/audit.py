@@ -51,6 +51,10 @@ def audit_append(
     Creates the parent directory on first use. A file-system failure is warned to
     stderr and the entry is still added to the in-memory mirror, so the UI never
     loses the trail because the disk is read-only. Never raises.
+
+    Dedupe: the background cycle re-emits identical lines every few minutes, so
+    when the newest entry already carries the same action, booking and detail,
+    the existing entry is returned without appending a duplicate.
     """
     global _warned_not_writable
     try:
@@ -74,6 +78,17 @@ def audit_append(
             "degraded": True,
         }
     with _lock:
+        # Cycle-generated lines are deterministic: identical fixtures produce
+        # byte-identical action/booking/detail every few minutes. If the same
+        # line is already in the trail, return it instead of appending a
+        # duplicate. Host actions (host_decision, cycle_failed, ...) always
+        # append — those are real events, not scheduler repeats.
+        if action in ("policy_change_detected", "resolved_quietly", "escalated_to_host"):
+            for existing in reversed(_mirror):
+                if (existing.get("action") == str(action)
+                        and existing.get("booking_id") == str(booking_id or "")
+                        and existing.get("detail") == str(detail)):
+                    return dict(existing)
         _mirror.append(entry)
     try:
         AUDIT_PATH.parent.mkdir(parents=True, exist_ok=True)

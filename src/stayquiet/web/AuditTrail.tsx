@@ -17,7 +17,17 @@ function hhmmss(at: string): string {
 
 export function AuditTrail(props: AuditTrailProps): JSX.Element {
   const { entries } = props;
-  if (entries.length === 0) {
+  // Dedupe: the background cycle re-emits the same audit lines every few
+  // minutes, so an identical action+booking+detail already shown is not added
+  // again. Keeps the first (newest) occurrence; timestamps/entry_ids differ.
+  const seen = new Set<string>();
+  const unique = entries.filter((a) => {
+    const key = `${a.action}\n${a.booking_id}\n${a.detail}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  if (unique.length === 0) {
     return (
       <section className="sq-card" aria-label="Audit trail">
         <div className="sq-card__head">
@@ -38,7 +48,7 @@ export function AuditTrail(props: AuditTrailProps): JSX.Element {
           Audit trail
         </h2>
         <span className="sq-badge sq-badge--outline sq-badge--mono">
-          {entries.length} entries · append-only
+          {unique.length} entries · append-only
         </span>
       </div>
       {/* The dispute-defence view: nothing is paginated and no detail is
@@ -46,7 +56,7 @@ export function AuditTrail(props: AuditTrailProps): JSX.Element {
           hiding a single line. It prints in full (see the @media print rule). */}
       <div className="sq-audit__scroll">
         <dl className="sq-audit">
-          {entries.map((a) => (
+          {unique.map((a) => (
             <div
               key={a.entry_id}
               className={`sq-audit__row${a.degraded ? " sq-degraded-row" : ""}`}
