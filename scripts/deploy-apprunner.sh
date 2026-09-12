@@ -12,6 +12,12 @@ set -euo pipefail
 : "${AWS_REGION:=us-west-2}"
 : "${ECR_REPOSITORY:=stayquiet}"
 SERVICE_NAME="${SERVICE_NAME:-stayquiet}"
+# Immutable image tag per deploy (git sha, timestamp fallback). App Runner treats
+# an update-service call with an unchanged image identifier as a no-op and keeps
+# serving the old revision, so :latest alone never rolls out — the service must
+# point at a tag that changes on every deploy.
+IMAGE_TAG="${IMAGE_TAG:-$(git rev-parse --short HEAD 2>/dev/null || date +%Y%m%d%H%M%S)}"
+echo "[deploy] image tag=${IMAGE_TAG}"
 ROLE_NAME="${ROLE_NAME:-StayQuietAppRunnerECRAccess}"
 ECR_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}"
 
@@ -26,9 +32,10 @@ echo "[deploy] ECR repository ready"
 # 2. Build and push ---------------------------------------------------------
 aws ecr get-login-password --region "$AWS_REGION" \
   | docker login --username AWS --password-stdin "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-docker build -t "${ECR_URI}:latest" .
+docker build -t "${ECR_URI}:${IMAGE_TAG}" -t "${ECR_URI}:latest" .
+docker push "${ECR_URI}:${IMAGE_TAG}"
 docker push "${ECR_URI}:latest"
-echo "[deploy] image pushed: ${ECR_URI}:latest"
+echo "[deploy] image pushed: ${ECR_URI}:${IMAGE_TAG}"
 
 # 3. Access role App Runner uses to pull from a private ECR ------------------
 ROLE_ARN="arn:aws:iam::${AWS_ACCOUNT_ID}:role/${ROLE_NAME}"
@@ -47,7 +54,7 @@ SERVICE_ARN="$(aws apprunner list-services --region "$AWS_REGION" \
   --query "ServiceSummaryList[?ServiceName=='${SERVICE_NAME}'].ServiceArn | [0]" --output text)"
 
 SOURCE_CFG=$(cat <<JSON
-{"ImageRepository":{"ImageIdentifier":"${ECR_URI}:latest","ImageRepositoryType":"ECR",
+{"ImageRepository":{"ImageIdentifier":"${ECR_URI}:${IMAGE_TAG}","ImageRepositoryType":"ECR",
  "ImageConfiguration":{"Port":"8080","RuntimeEnvironmentVariables":{"STAYQUIET_CYCLE_INTERVAL_S":"300"}}},
  "AutoDeploymentsEnabled":false,
  "AuthenticationConfiguration":{"AccessRoleArn":"${ROLE_ARN}"}}
