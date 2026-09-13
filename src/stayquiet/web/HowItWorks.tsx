@@ -62,7 +62,8 @@ export function HowItWorks(): JSX.Element {
             </li>
           </ol>
           <p className="sq-how__cta">
-            Press <strong>Run a cycle now</strong> below and watch the step list light up,
+            Press <strong>Run a cycle now</strong>, next to this help, and watch the step
+            list below light up,
             the latest draft appear, and any new decisions arrive. The agent also runs on
             its own every few minutes.
           </p>

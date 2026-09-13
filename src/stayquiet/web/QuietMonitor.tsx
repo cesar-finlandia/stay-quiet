@@ -121,7 +121,18 @@ export function QuietMonitor(props: QuietMonitorProps): JSX.Element {
             />
             {streamStatus}
           </span>
-          <HowItWorks />
+          <span className="sq-panel__tools">
+            <button
+              type="button"
+              className="sq-btn sq-btn--brand sq-btn--compact"
+              onClick={onRunNow}
+              disabled={working}
+            >
+              <IconPlay />
+              {working ? "Cycle running…" : "Run a cycle now"}
+            </button>
+            <HowItWorks />
+          </span>
         </div>
 
         {working ? (
@@ -207,13 +218,6 @@ export function QuietMonitor(props: QuietMonitorProps): JSX.Element {
             <QuietWorkBar affected={run.bookings_affected} scanned={run.bookings_scanned} />
           </>
         ) : null}
-
-        <div className="sq-actions">
-          <button type="button" className="sq-btn sq-btn--brand" onClick={onRunNow} disabled={working}>
-            <IconPlay />
-            {working ? "Cycle running…" : "Run a cycle now"}
-          </button>
-        </div>
       </section>
     </>
   );

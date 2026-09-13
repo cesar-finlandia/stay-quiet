@@ -966,6 +966,25 @@ html[data-sq-mode="dark"] .sq-theme-toggle__core {
   margin-bottom: var(--sq-space-4);
 }
 
+.sq-panel__tools {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sq-space-2);
+  margin-left: auto;
+}
+
+/* Compact in-head variant of the run button: same brand treatment, sized to
+   sit next to the stream badge and the "?" without crowding the title. */
+.sq-btn--compact {
+  padding: 6px 12px;
+  font-size: var(--sq-text-xs);
+}
+
+.sq-btn--compact svg {
+  width: 13px;
+  height: 13px;
+}
+
 .sq-stats {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
