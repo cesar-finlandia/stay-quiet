@@ -4,6 +4,7 @@ import type { EventEnvelope } from "src/platform/transport/event-envelope.js";
 import { CitationDisplay } from "src/platform/ui/CitationDisplay.js";
 import { StepStatusIndicator } from "src/platform/ui/StepStatusIndicator.js";
 import { STEP_LABELS } from "./labels.js";
+import { HowItWorks } from "./HowItWorks.js";
 import type { AppState } from "./api.js";
 import {
   IconPlay,
@@ -120,6 +121,7 @@ export function QuietMonitor(props: QuietMonitorProps): JSX.Element {
             />
             {streamStatus}
           </span>
+          <HowItWorks />
         </div>
 
         {working ? (

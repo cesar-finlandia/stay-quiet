@@ -1663,3 +1663,65 @@ html[data-sq-mode="dark"] .sq-theme-toggle__core {
     overflow: visible;
   }
 }
+
+/* ─────────────────────  "How this demo works" popover  ───────────────────── */
+
+.sq-how {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.sq-how__btn {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--sq-radius-pill);
+  border: var(--sq-border-hair) solid var(--sq-border);
+  background: var(--sq-surface-sunken);
+  color: var(--sq-fg-subtle);
+  font: inherit;
+  font-size: var(--sq-text-sm);
+  font-weight: var(--sq-weight-semibold);
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.sq-how__btn:hover,
+.sq-how__btn[aria-expanded="true"] {
+  color: var(--sq-brand);
+  border-color: var(--sq-brand);
+}
+
+.sq-how__panel {
+  position: absolute;
+  top: calc(100% + var(--sq-space-2));
+  right: 0;
+  z-index: 30;
+  width: min(22rem, calc(100vw - 3rem));
+  background: var(--sq-surface);
+  border: var(--sq-border-hair) solid var(--sq-border);
+  border-radius: var(--sq-radius-lg);
+  box-shadow: var(--sq-shadow-md, 0 12px 32px rgb(0 0 0 / 0.18));
+  padding: var(--sq-space-4);
+  font-size: var(--sq-text-sm);
+  line-height: var(--sq-leading-normal);
+  color: var(--sq-fg);
+}
+
+.sq-how__lede {
+  margin: 0 0 var(--sq-space-3);
+}
+
+.sq-how__steps {
+  margin: 0 0 var(--sq-space-3);
+  padding-left: var(--sq-space-5);
+  display: grid;
+  gap: var(--sq-space-1);
+}
+
+.sq-how__cta {
+  margin: 0;
+  padding-top: var(--sq-space-3);
+  border-top: var(--sq-border-hair) solid var(--sq-border);
+}
