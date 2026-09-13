@@ -1,5 +1,5 @@
 // StayQuiet UI — the app shell: header, decision ping or quiet monitor, audit, footer.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { JSX } from "react";
 import type { EventEnvelope } from "src/platform/transport/event-envelope.js";
 import {
@@ -70,20 +70,57 @@ export function App(): JSX.Element {
   const [envs, setEnvs] = useState<EventEnvelope[]>([]);
   const [streamStatus, setStreamStatus] = useState<StreamStatus>("connecting");
 
+  // "Run a cycle now" replays a cold start: the view is cleared to the quiet
+  // empty state ("Nothing needs you" + "Waiting for the next background
+  // cycle…") for a few seconds, then the new cycle's envelopes re-light the
+  // pipeline step by step. Two guards make the replay honest:
+  //  - floorSeqRef: envelopes at or below the pre-click high-water mark belong
+  //    to the previous cycle and are never re-added after the clear.
+  //  - suppressUntilRef: the 3 s poller keeps returning the backend's stale
+  //    run/decisions/audit during the empty window, so polls are ignored until
+  //    the window elapses and a fresh fetch re-syncs.
+  const floorSeqRef = useRef(0);
+  const suppressUntilRef = useRef(0);
+  // Envelopes of the fresh cycle that arrive during the empty window are held
+  // here and released when the window elapses, so the quiet state is readable
+  // for a few seconds before the pipeline starts lighting — exactly like the
+  // ~2 s scheduler delay before the first cycle on a cold start.
+  const pendingEnvsRef = useRef<EventEnvelope[]>([]);
+
+  const appendEnvs = (batch: EventEnvelope[]): void => {
+    if (batch.length === 0) return;
+    setEnvs((prev) => {
+      const seenSeq = new Set(prev.map((e) => e.sequence));
+      const seenKey = new Set(prev.map((e) => envelopeContentKey(e)));
+      const fresh = batch.filter((env) => {
+        if (seenSeq.has(env.sequence)) return false;
+        const key = envelopeContentKey(env);
+        if (seenKey.has(key)) return false;
+        seenSeq.add(env.sequence);
+        seenKey.add(key);
+        return true;
+      });
+      if (fresh.length === 0) return prev;
+      const next = [...prev, ...fresh].sort((a, b) => a.sequence - b.sequence);
+      return next.length > MAX_STREAM_ENVELOPES
+        ? next.slice(next.length - MAX_STREAM_ENVELOPES)
+        : next;
+    });
+  };
+
   useEffect(() => {
     const unsubscribe = subscribeEnvelopes({
       onEnvelope: (env) => {
-        setEnvs((prev) => {
-          if (prev.some((e) => e.sequence === env.sequence)) return prev;
-          // Same entry already shown (re-emitted by a later identical cycle):
-          // do not add a duplicate.
-          const key = envelopeContentKey(env);
-          if (prev.some((e) => envelopeContentKey(e) === key)) return prev;
-          const next = [...prev, env].sort((a, b) => a.sequence - b.sequence);
-          return next.length > MAX_STREAM_ENVELOPES
-            ? next.slice(next.length - MAX_STREAM_ENVELOPES)
-            : next;
-        });
+        if (env.sequence <= floorSeqRef.current) return;
+        // Hold the fresh cycle back until the empty window elapses; otherwise
+        // a fast backend would light the first step in under a second and the
+        // host would never see the quiet state this click promised.
+        if (Date.now() < suppressUntilRef.current) {
+          const buf = pendingEnvsRef.current;
+          if (!buf.some((e) => e.sequence === env.sequence)) buf.push(env);
+          return;
+        }
+        appendEnvs([env]);
       },
       onStatus: (s) => setStreamStatus(s),
     });
@@ -95,6 +132,7 @@ export function App(): JSX.Element {
     const poll = async (): Promise<void> => {
       const s = await fetchState();
       if (alive) {
+        if (Date.now() < suppressUntilRef.current) return;
         setState(s);
         setLoaded(true);
       }
@@ -121,16 +159,47 @@ export function App(): JSX.Element {
 
   // "Run a cycle now" is the one click in the app whose result is not immediate:
   // the POST returns as soon as the cycle is accepted, and the work then arrives
-  // over the stream. runBusy keeps the working widget up from the click until
-  // either the backend reports a cycle running or ~2.5s have passed, so the host
-  // is never looking at a button that appears to have done nothing.
+  // over the stream. It replays a cold start: clear the view to the quiet empty
+  // state for a few seconds (the same "Nothing needs you" the host sees on a
+  // fresh load), then let the new cycle's envelopes re-light the pipeline. The
+  // immediate fetchState() the old handler did is deliberately gone — it would
+  // repopulate the stale previous cycle before the empty window is even seen.
+  // runBusy keeps the working widget up from the click until the new cycle
+  // settles, so the host is never looking at a button that appears to have
+  // done nothing.
   const onRunNow = async (): Promise<void> => {
+    const floor = Math.max(
+      state.latest_sequence,
+      ...envs.map((e) => e.sequence),
+      ...state.events.map((e) => e.sequence),
+      0,
+    );
+    floorSeqRef.current = floor;
+    pendingEnvsRef.current = [];
+    // Matches the ~2 s scheduler delay before the first cycle on a cold start:
+    // long enough to read the quiet state, short enough to not feel stalled.
+    suppressUntilRef.current = Date.now() + 3200;
+    setEnvs([]);
+    setState((prev) => ({ ...EMPTY_STATE, config: prev.config }));
     setRunBusy(true);
     try {
       await startRun();
-      setState(await fetchState());
     } finally {
-      setTimeout(() => setRunBusy(false), 2500);
+      setTimeout(() => setRunBusy(false), 3000);
+      // Re-sync past the empty window. Release the buffered fresh envelopes so
+      // the pipeline starts lighting step by step, then fetch the fresh trace —
+      // or, when the backend was already busy and refused the POST, the latest
+      // settled state, which is still newer than the cleared view.
+      setTimeout(() => {
+        const buffered = pendingEnvsRef.current;
+        pendingEnvsRef.current = [];
+        appendEnvs(buffered);
+        void fetchState().then((s) => {
+          if (Date.now() < suppressUntilRef.current) return;
+          setState(s);
+          setLoaded(true);
+        });
+      }, 3400);
     }
   };
 
